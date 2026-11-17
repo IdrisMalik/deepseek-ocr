@@ -1,8 +1,8 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
-// The reference demo keeps the entry HTML inside src/. Vite needs explicit
-// paths for the root-level public/ and dist/ directories in that layout.
+// The entry HTML lives inside src/. Vite needs explicit paths for the
+// root-level public/ and dist/ directories in that layout.
 const rootDir = process.cwd();
 
 export default defineConfig({

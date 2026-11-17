@@ -1,7 +1,7 @@
 {
   "name": "deepseek-ocr-studio",
   "version": "0.1.0",
-  "description": "Static, browser-only OCR workstation using the official DeepSeek OCR API with a user-provided key.",
+  "description": "A static, browser-only OCR workstation for the official DeepSeek OCR API.",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -24,6 +24,6 @@
     "vite": "^6.0.5"
   },
   "engines": {
-    "node": ">=18.17"
+    "node": ">=22.12.0"
   }
 }
