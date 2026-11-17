@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OcrClientError, toOcrFile, verifyApiKey } from '../src/services/api/client.js';
+import { OcrClientError, verifyApiKey } from '../src/services/api/client.js';
 import { clearKey, loadKey, saveKey } from '../src/services/settings.js';
 
 // Minimal localStorage shim for Node tests (browsers provide the real one).
@@ -15,16 +15,12 @@ const store = new Map<string, string>();
   },
 } as Storage;
 
-test('toOcrFile decodes a base64 data URL into bytes', () => {
-  const input = toOcrFile('a.png', 'data:image/png;base64,AAEC', 'image/png');
-  assert.equal(input.name, 'a.png');
-  assert.deepEqual(Array.from(input.bytes), [0, 1, 2]);
-});
-
 test('verifyApiKey reports rejected keys', async () => {
   const original = globalThis.fetch;
   globalThis.fetch = (async () =>
-    new Response(JSON.stringify({ error: { message: 'invalid key' } }), { status: 401 })) as typeof fetch;
+    new Response(JSON.stringify({ error: { message: 'invalid key' } }), {
+      status: 401,
+    })) as typeof fetch;
   try {
     await assert.rejects(
       () => verifyApiKey('bad'),
@@ -85,8 +81,7 @@ test('verifyApiKey uses verification wording for server failures', async () => {
     await assert.rejects(
       () => verifyApiKey('k'),
       (e: unknown) =>
-        e instanceof OcrClientError &&
-        e.message === 'Could not verify the key. Try again later.'
+        e instanceof OcrClientError && e.message === 'Could not verify the key. Try again later.'
     );
   } finally {
     globalThis.fetch = original;

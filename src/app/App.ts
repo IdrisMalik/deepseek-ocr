@@ -1,18 +1,11 @@
 /** Application shell: DOM wiring, file intake and the OCR workflow. */
+import { OcrClientError, recognizeFileOnce, verifyApiKey } from '../services/api/client.js';
 import {
-  OcrClientError,
-  recognizeFileOnce,
-  toOcrFile,
-  verifyApiKey,
-} from '../services/api/client.js';
-import { extensionForMime } from '../services/formats.js';
-import {
+  canPreview,
   createItemId,
   forgetImage,
-  isDocument,
-  loadDecodedImage,
   MAX_FILES,
-  renderProcessed,
+  prepareUpload,
   resolveMimeType,
   validateFile,
   validateFileContent,
@@ -29,7 +22,7 @@ import {
 import type { FileItem, FileOcrResult, OcrPurpose } from '../services/api/types.js';
 import { t } from '../i18n/index.js';
 import { toast } from '../components/base/Toast.js';
-import { renderAttachments } from '../components/files/FileCard.js';
+import { focusAttachment, renderAttachments } from '../components/files/FileCard.js';
 import { renderResult } from '../components/result/ResultPanel.js';
 import { state, successfulItems } from './state.js';
 
@@ -86,7 +79,9 @@ let dragDepth = 0;
 
 function selectedPurpose(): OcrPurpose {
   const checked = document.querySelector<HTMLInputElement>('input[name="purpose"]:checked');
-  return checked?.value === 'rich_layout_recognition' ? 'rich_layout_recognition' : 'text_recognition';
+  return checked?.value === 'rich_layout_recognition'
+    ? 'rich_layout_recognition'
+    : 'text_recognition';
 }
 
 /* --------------------------- Rendering --------------------------- */
@@ -111,7 +106,11 @@ function setProgress(done: number, total: number, label: string): void {
 }
 
 function renderAll(): void {
-  renderAttachments({ onRemove: removeItem, onRetry: (id) => void runOcr([id]), onAdd: browse });
+  renderAttachments({
+    onRemove: removeItem,
+    onRetry: (id) => void runOcr([id], true),
+    onAdd: browse,
+  });
   renderProgress();
   renderResult();
 }
@@ -142,13 +141,15 @@ async function addFiles(files: File[], generation: number): Promise<void> {
       await validateFileContent(file, mimeType);
     } catch (error) {
       if (generation !== intakeGeneration) return;
-      problems.push(error instanceof Error ? error.message : t('couldNotVerify', { name: file.name }));
+      problems.push(
+        error instanceof Error ? error.message : t('couldNotVerify', { name: file.name })
+      );
       continue;
     }
     if (generation !== intakeGeneration) return;
 
-    // Documents render as a type tile and never need an object URL.
-    const previewUrl = mimeType.startsWith('image/') ? URL.createObjectURL(file) : '';
+    // Documents (including TIFF) render as a type tile and need no object URL.
+    const previewUrl = canPreview(mimeType) ? URL.createObjectURL(file) : '';
     const item: FileItem = {
       id: createItemId(),
       name: file.name,
@@ -156,35 +157,12 @@ async function addFiles(files: File[], generation: number): Promise<void> {
       mimeType,
       blob: file,
       previewUrl,
-      naturalWidth: 0,
-      naturalHeight: 0,
       rotation: 0,
-      scale: 1,
-      crop: null,
       status: 'ready',
       error: null,
       result: null,
       editedText: null,
     };
-
-    // Non-raster inputs are sent as-is; only images need a raster decode.
-    if (!isDocument(item)) {
-      try {
-        const image = await loadDecodedImage(item);
-        item.naturalWidth = image.naturalWidth;
-        item.naturalHeight = image.naturalHeight;
-      } catch (error) {
-        if (generation !== intakeGeneration) {
-          if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
-          forgetImage(item.id);
-          return;
-        }
-        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
-        forgetImage(item.id);
-        problems.push(error instanceof Error ? error.message : t('couldNotRead', { name: file.name }));
-        continue;
-      }
-    }
 
     if (generation !== intakeGeneration) {
       if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
@@ -238,6 +216,14 @@ function removeItem(id: string): void {
     dom.composerError.hidden = true;
   }
   renderAll();
+
+  // Removing a thumbnail rebuilds the strip, so restore focus explicitly.
+  if (state.items.length > 0) {
+    const next = state.items[Math.min(index, state.items.length - 1)];
+    focusAttachment(next.id, 'remove');
+  } else {
+    dom.browseLink.focus();
+  }
 }
 
 /** Reset everything: files, results, editor, progress and async processing. */
@@ -270,6 +256,7 @@ function clearAll(): void {
   dom.extractButton.classList.remove('busy');
   dom.main.classList.remove('has-result');
   renderAll();
+  dom.browseLink.focus();
 }
 
 function showComposerError(message: string, retryIds: string[]): void {
@@ -279,11 +266,11 @@ function showComposerError(message: string, retryIds: string[]): void {
   const retry = document.createElement('button');
   retry.type = 'button';
   retry.textContent = t('retry');
-  retry.addEventListener('click', () => void runOcr(retryIds));
+  retry.addEventListener('click', () => void runOcr(retryIds, true));
   dom.composerError.appendChild(retry);
 }
 
-async function runOcr(ids: string[]): Promise<void> {
+async function runOcr(ids: string[], focusCancel = false): Promise<void> {
   if (state.processing || intakePending > 0) return;
   const targets = state.items.filter((item) => ids.includes(item.id));
   if (targets.length === 0) return;
@@ -300,8 +287,8 @@ async function runOcr(ids: string[]): Promise<void> {
   batchController = new AbortController();
   const signal = batchController.signal;
   const purpose = selectedPurpose();
-  // Keep the batch on the key that was current when it started, even if the
-  // user removes or replaces it while files are still queued.
+  // Keep the batch on the key that was current when it started. Replacing the
+  // key does not change in-flight work; removing it cancels the batch.
   const apiKey = state.apiKey;
 
   dom.composerError.hidden = true;
@@ -316,6 +303,7 @@ async function runOcr(ids: string[]): Promise<void> {
     state.activeId = null;
   }
   renderAll();
+  if (focusCancel) dom.cancelButton.focus();
 
   let done = 0;
   setProgress(0, targets.length, t('processingLabel'));
@@ -328,11 +316,9 @@ async function runOcr(ids: string[]): Promise<void> {
       async (item): Promise<FileOcrResult> => {
         item.status = 'processing';
         renderAll();
-        const rendered = await renderProcessed(item);
-        // Canvas re-encodes images as PNG; the sent filename must match the bytes.
-        const apiName = `${item.name.replace(/\.[^.]+$/, '')}.${extensionForMime(rendered.mimeType)}`;
+        const upload = await prepareUpload(item);
         return recognizeFileOnce(
-          toOcrFile(apiName, rendered.dataUrl, rendered.mimeType),
+          { name: upload.filename, blob: upload.blob },
           purpose,
           apiKey,
           signal
@@ -363,7 +349,11 @@ async function runOcr(ids: string[]): Promise<void> {
               outcome.reason instanceof Error ? outcome.reason.message : t('couldNotExtract');
           }
           done += 1;
-          setProgress(done, targets.length, signal.aborted ? t('cancelling') : t('processingLabel'));
+          setProgress(
+            done,
+            targets.length,
+            signal.aborted ? t('cancelling') : t('processingLabel')
+          );
           // Apply the file result immediately so completed thumbnails do not
           // keep showing a processing spinner until the whole batch ends.
           renderAll();
@@ -418,17 +408,16 @@ async function runOcr(ids: string[]): Promise<void> {
     if (generation === batchGeneration) {
       // Exceptions outside per-file workers must not disappear as unhandled
       // promise rejections from the fire-and-forget call sites.
-      showComposerError(
-        error instanceof Error ? error.message : t('somethingWrong'),
-        ids
-      );
+      showComposerError(error instanceof Error ? error.message : t('somethingWrong'), ids);
     }
   } finally {
     // A newer batch or a clear owns the state now; do not clobber it.
+    const cancelFocused = document.activeElement === dom.cancelButton;
     if (generation === batchGeneration) {
       state.processing = false;
       batchController = null;
       renderAll();
+      if (cancelFocused) dom.extractButton.focus();
     }
   }
 }
@@ -530,6 +519,11 @@ dom.keySave.addEventListener('click', async () => {
     dom.keyStatus.textContent = t('enterKeyFirst');
     return;
   }
+  if (state.demo) {
+    dom.keyStatus.textContent = t('demoKeyStatus');
+    dom.keyInput.value = '';
+    return;
+  }
   const verification = ++keyGeneration;
   dom.keySave.disabled = true;
   dom.keyStatus.textContent = t('verifying');
@@ -552,6 +546,7 @@ dom.keySave.addEventListener('click', async () => {
 });
 
 dom.keyClear.addEventListener('click', () => {
+  const wasProcessing = state.processing;
   keyGeneration += 1;
   state.apiKey = '';
   dom.keyInput.value = '';
@@ -559,7 +554,12 @@ dom.keyClear.addEventListener('click', () => {
   clearKey();
   updateBadge();
   updateKeyStatus();
-  toast(t('keyRemoved'));
+  if (wasProcessing) {
+    cancelProcessing();
+    toast(t('keyRemovedBatchCancelled'));
+  } else {
+    toast(t('keyRemoved'));
+  }
 });
 
 dom.textEditor.addEventListener('input', () => {
@@ -602,11 +602,15 @@ dom.copyButton.addEventListener('click', async () => {
 
 dom.exportTxtButton.addEventListener('click', () => {
   const title = dom.textEditor.dataset.exportTitle ?? t('ocrOutput');
-  downloadText(`${title}.txt`, toPlainTextExport(title, dom.textEditor.value), 'text/plain;charset=utf-8');
+  downloadText(`${title}.txt`, toPlainTextExport(dom.textEditor.value), 'text/plain;charset=utf-8');
 });
 dom.exportMdButton.addEventListener('click', () => {
   const title = dom.textEditor.dataset.exportTitle ?? t('ocrOutput');
-  downloadText(`${title}.md`, toMarkdownExport(title, dom.textEditor.value), 'text/markdown;charset=utf-8');
+  downloadText(
+    `${title}.md`,
+    toMarkdownExport(title, dom.textEditor.value),
+    'text/markdown;charset=utf-8'
+  );
 });
 
 window.addEventListener('keydown', (event) => {

@@ -48,6 +48,7 @@ export const en = {
   invalidKey: 'Invalid API key. Check it and try again.',
   unknownError: 'Unknown error.',
   keyRemoved: 'API key removed.',
+  keyRemovedBatchCancelled: 'API key removed. Running batch cancelled.',
 
   // Mode badge
   demoBadge: 'Demo mode',

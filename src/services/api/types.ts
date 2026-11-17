@@ -13,6 +13,7 @@ export type FileOcrError = {
 };
 
 export type FileOcrResult = {
+  id?: string;
   name: string;
   pages: PageResult[];
   inputTokens?: number;
@@ -29,8 +30,6 @@ export type ApiErrorPayload = {
   error?: { message?: string; code?: string; type?: string };
 };
 
-export type CropRect = { x: number; y: number; w: number; h: number };
-
 export type FileStatus = 'ready' | 'processing' | 'done' | 'error' | 'cancelled';
 
 /** A queued input file — an image or a document (PDF/Word/PowerPoint). */
@@ -41,15 +40,9 @@ export type FileItem = {
   mimeType: string;
   blob: Blob;
   previewUrl: string;
-  naturalWidth: number;
-  naturalHeight: number;
   rotation: number;
-  scale: number;
-  crop: CropRect | null;
   status: FileStatus;
   error: string | null;
   result: FileOcrResult | null;
   editedText: string | null;
 };
-
-export type ViewMode = 'clean' | 'raw';

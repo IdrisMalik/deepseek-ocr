@@ -11,6 +11,19 @@ export type FileCardActions = {
   onAdd: () => void;
 };
 
+/** Focus a stable action after the attachment strip is rebuilt. */
+export function focusAttachment(id: string, action: string): boolean {
+  const root = document.getElementById('attachments');
+  if (!root) return false;
+  const thumb = Array.from(root.querySelectorAll<HTMLElement>('[data-id]')).find(
+    (node) => node.dataset.id === id
+  );
+  const target = thumb?.querySelector<HTMLElement>(`[data-action="${action}"]`);
+  if (!target) return false;
+  target.focus();
+  return true;
+}
+
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
   if (!node) throw new Error(`Missing element #${id}`);
@@ -30,6 +43,13 @@ export function renderAttachments(actions: FileCardActions): void {
   fileCount.textContent =
     state.items.length === 1 ? t('fileOne') : t('fileMany', { count: state.items.length });
   attachments.classList.toggle('dense', state.items.length > 8);
+
+  // Remember the active action before replaceChildren() destroys the nodes.
+  const active = document.activeElement as HTMLElement | null;
+  const activeThumb = active?.closest<HTMLElement>('[data-id]');
+  const activeId = activeThumb?.dataset.id;
+  const activeAction = active?.dataset.action;
+
   attachments.replaceChildren();
 
   if (!hasItems) return;
@@ -38,6 +58,7 @@ export function renderAttachments(actions: FileCardActions): void {
     const thumb = document.createElement('div');
     thumb.className = 'thumb';
     thumb.dataset.testid = 'attachment';
+    thumb.dataset.id = item.id;
     thumb.dataset.name = item.name;
     if (item.status === 'done') thumb.classList.add('done');
     if (item.status === 'error') thumb.classList.add('error');
@@ -62,6 +83,7 @@ export function renderAttachments(actions: FileCardActions): void {
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'thumb-remove';
+    remove.dataset.action = 'remove';
     remove.setAttribute('aria-label', t('removeLabel', { name: item.name }));
     remove.innerHTML = icons.close;
     remove.disabled = state.processing;
@@ -75,6 +97,7 @@ export function renderAttachments(actions: FileCardActions): void {
       const rotate = document.createElement('button');
       rotate.type = 'button';
       rotate.className = 'thumb-rotate';
+      rotate.dataset.action = 'rotate';
       rotate.setAttribute('aria-label', t('rotateLabel', { name: item.name }));
       rotate.title = t('rotate');
       rotate.innerHTML = icons.rotate;
@@ -89,9 +112,11 @@ export function renderAttachments(actions: FileCardActions): void {
     if (item.status === 'processing') {
       const overlay = document.createElement('div');
       overlay.className = 'thumb-overlay';
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-label', t('processingAria'));
       const spinner = document.createElement('div');
       spinner.className = 'spinner';
-      spinner.setAttribute('aria-label', t('processingAria'));
+      spinner.setAttribute('aria-hidden', 'true');
       overlay.appendChild(spinner);
       thumb.appendChild(overlay);
     } else if (item.status === 'error') {
@@ -105,6 +130,7 @@ export function renderAttachments(actions: FileCardActions): void {
       const retry = document.createElement('button');
       retry.type = 'button';
       retry.className = 'retry';
+      retry.dataset.action = 'retry';
       retry.textContent = t('retry');
       retry.setAttribute('aria-label', t('retryLabel', { name: item.name }));
       retry.addEventListener('click', (event) => {
@@ -137,10 +163,18 @@ export function renderAttachments(actions: FileCardActions): void {
     const add = document.createElement('button');
     add.type = 'button';
     add.className = 'thumb-add';
+    add.dataset.action = 'add';
     add.setAttribute('aria-label', t('addMoreFiles'));
     add.title = t('addMoreFiles');
     add.innerHTML = icons.plus;
     add.addEventListener('click', actions.onAdd);
     attachments.appendChild(add);
+  }
+
+  // Re-focus the same action when it still exists after the rebuild.
+  if (activeAction === 'add') {
+    attachments.querySelector<HTMLElement>('[data-action="add"]')?.focus();
+  } else if (activeId && activeAction) {
+    focusAttachment(activeId, activeAction);
   }
 }

@@ -25,20 +25,18 @@ export function cleanOcrText(raw: string): string {
   // Rich-layout pages emit box spans such as:
   //   <｜box｜>[[31,191,522,341]]<｜/box｜>
   // The live API uses <｜/box｜> as the closing token (the docs also show
-  // </｜box｜>), so accept both. Handle an unclosed box too, otherwise a bare
-  // coordinate array would leak into the user-visible text.
-  text = text.replace(
-    /<｜box｜>\s*\[\[[^\]]*\]\](?:\s*(?:<\/｜box｜>|<｜\/box｜>))?/g,
-    ''
-  );
-  // Drop any remaining full-width layout tokens (ref, /ref, etc.).
-  text = text.replace(/<\/?｜[^｜]*｜>/g, '');
+  // </｜box｜>), so accept both. Bound the coordinate content so malformed or
+  // repetitive output cannot trigger expensive backtracking.
+  text = text.replace(/<｜box｜>\s*\[\[[^\]\n]{0,200}\]\](?:\s*(?:<\/｜box｜>|<｜\/box｜>))?/g, '');
+  // Drop remaining full-width layout tokens (ref, /ref, box, etc.). The
+  // recognized text between <｜ref｜>…<｜/ref｜> is document content and is kept.
+  text = text.replace(/<(?:｜\/?|\/｜)[A-Za-z][A-Za-z0-9_-]{0,31}｜>/g, '');
 
   // Normalize line endings, trailing spaces and excessive blank lines.
   text = text
     .replace(/\r\n?/g, '\n')
     .split('\n')
-    .map((line) => line.replace(/[ \t]+$/, ''))
+    .map((line) => line.trimEnd())
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
@@ -78,7 +76,7 @@ function countLabel(count: number, noun: string): string {
   return `${count.toLocaleString()} ${noun}${count === 1 ? '' : 's'}`;
 }
 
-export function toPlainTextExport(_title: string, text: string): string {
+export function toPlainTextExport(text: string): string {
   return `${text.trimEnd()}\n`;
 }
 

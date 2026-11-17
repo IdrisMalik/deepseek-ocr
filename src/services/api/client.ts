@@ -38,7 +38,7 @@ async function parseError(response: Response, body?: string): Promise<OcrClientE
   });
 }
 
-export type OcrFileInput = { name: string; mimeType: string; bytes: Uint8Array<ArrayBuffer> };
+export type OcrFileInput = { name: string; blob: Blob };
 
 /**
  * Combine the caller's signal with a hard timeout without depending on
@@ -68,21 +68,17 @@ function combineWithTimeout(signal: AbortSignal, timeoutMs: number) {
   };
 }
 
-/** Convert a base64 data URL (from canvas preprocessing) to raw bytes. */
-function dataUrlToBytes(dataUrl: string): Uint8Array<ArrayBuffer> {
-  const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
-
-async function postOcrOnce(file: OcrFileInput, purpose: OcrPurpose, key: string, signal: AbortSignal): Promise<FileOcrResult> {
+async function postOcrOnce(
+  file: OcrFileInput,
+  purpose: OcrPurpose,
+  key: string,
+  signal: AbortSignal
+): Promise<FileOcrResult> {
   const combined = combineWithTimeout(signal, clientConfig.requestTimeoutMs);
 
   const form = new FormData();
   form.append('purpose', purpose);
-  form.append('file', new Blob([file.bytes], { type: file.mimeType }), file.name);
+  form.append('file', file.blob, file.name);
 
   let response: Response;
   let body: string;
@@ -97,11 +93,20 @@ async function postOcrOnce(file: OcrFileInput, purpose: OcrPurpose, key: string,
     // while it is still downloading, not only until headers arrive.
     body = await response.text();
   } catch {
-    if (signal.aborted) throw new OcrClientError('Cancelled.', { code: 'cancelled', retryable: false });
-    if (combined.timedOut()) throw new OcrClientError('Request timed out. Try again or use a smaller file.', { code: 'timeout', retryable: true });
+    if (signal.aborted)
+      throw new OcrClientError('Cancelled.', { code: 'cancelled', retryable: false });
+    if (combined.timedOut()) {
+      throw new OcrClientError(
+        'Request timed out after 180 seconds. Try a smaller file or split the document.',
+        { code: 'timeout', retryable: false }
+      );
+    }
+    // The request may have reached DeepSeek before the connection failed.
+    // Automatic retries could bill the same file twice, so leave this to the
+    // user's manual Retry action.
     throw new OcrClientError(
-      'Could not reach DeepSeek. Check your connection and try again.',
-      { code: 'network', retryable: true }
+      'Connection lost. DeepSeek may already be processing this file; retry manually only if needed.',
+      { code: 'network', retryable: false }
     );
   } finally {
     combined.dispose();
@@ -115,16 +120,18 @@ function demoResult(file: OcrFileInput): FileOcrResult {
   const safeName = file.name.replace(/[<>]/g, '');
   return {
     name: file.name,
-    pages: [{
-      index: 0,
-      text: [
-        `<｜ref｜>${safeName}<｜/ref｜><｜box｜>[[40,30,700,80]]<｜/box｜>`,
-        'Demo mode — sample output. No API key or API call was used.',
-        '',
-        'Paragraph structure and multilingual text — 你好，世界！',
-      ].join('\n'),
-      finishReason: 'stop',
-    }],
+    pages: [
+      {
+        index: 0,
+        text: [
+          `<｜ref｜>${safeName}<｜/ref｜><｜box｜>[[40,30,700,80]]<｜/box｜>`,
+          'Demo mode — sample output. No API key or API call was used.',
+          '',
+          'Paragraph structure and multilingual text — 你好，世界！',
+        ].join('\n'),
+        finishReason: 'stop',
+      },
+    ],
   };
 }
 
@@ -136,11 +143,15 @@ export async function recognizeFileOnce(
   signal: AbortSignal
 ): Promise<FileOcrResult> {
   if (demoMode()) return demoResult(file);
-  if (!key) throw new OcrClientError('Add an API key to extract text.', { code: 'no_key', retryable: false });
+  if (!key)
+    throw new OcrClientError('Add an API key to extract text.', {
+      code: 'no_key',
+      retryable: false,
+    });
   return postOcrOnce(file, purpose, key, signal);
 }
 
-/** Recognize a single file with bounded retries (for direct callers). */
+/** Recognize a single file with the same bounded retry policy as the batch queue. */
 export async function recognizeFile(
   file: OcrFileInput,
   purpose: OcrPurpose,
@@ -150,16 +161,19 @@ export async function recognizeFile(
   return withRetry(() => recognizeFileOnce(file, purpose, key, signal), {
     signal,
     maxAttempts: clientConfig.maxAttempts,
+    baseDelayMs: clientConfig.retryBaseMs,
+    maxDelayMs: clientConfig.retryMaxMs,
+    maxRetryAfterMs: clientConfig.retryMaxRetryAfterMs,
+    jitterRatio: clientConfig.retryJitterRatio,
     // Both OcrClientError (HTTP/network) and OcrError (malformed response)
     // expose `retryable`; checking the flag keeps response parsing retryable.
-    isRetryable: (error) => error instanceof Error && Boolean((error as { retryable?: boolean }).retryable),
-    getRetryAfterMs: (error) => (error instanceof OcrClientError ? error.retryAfterMs : undefined),
+    isRetryable: (error) =>
+      error instanceof Error && Boolean((error as { retryable?: boolean }).retryable),
+    getRetryAfterMs: (error) => {
+      const value = (error as { retryAfterMs?: unknown }).retryAfterMs;
+      return typeof value === 'number' ? value : undefined;
+    },
   });
-}
-
-/** Convert a preprocessing data URL into the byte payload used by recognizeFile. */
-export function toOcrFile(name: string, dataUrl: string, mimeType: string): OcrFileInput {
-  return { name, bytes: dataUrlToBytes(dataUrl), mimeType };
 }
 
 /** Verify a user-provided key with a free GET /models call. */

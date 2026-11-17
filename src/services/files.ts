@@ -1,16 +1,10 @@
 import type { FileItem } from './api/types.js';
 import { verifyFileContent } from '../utils/validate.js';
-import {
-  extensionForMime,
-  formatForExtension,
-  isSupportedMime,
-  kindForMime,
-} from './formats.js';
+import { extensionForMime, formatForExtension, isSupportedMime, kindForMime } from './formats.js';
 import { clientConfig } from '../utils/config.js';
 
 export const MAX_FILES = clientConfig.maxFiles;
 export const MAX_FILE_BYTES = clientConfig.maxFileBytes;
-const MAX_EXPORT_SIDE = 4096;
 
 /** Resolve MIME using the browser value first, then the file extension. */
 export function resolveMimeType(file: File): string {
@@ -38,25 +32,21 @@ export function isDocument(item: FileItem): boolean {
   return kindForMime(item.mimeType) === 'document';
 }
 
-/** Read the leading bytes and verify content matches the declared MIME type. */
-export async function validateFileContent(file: File, mimeType: string): Promise<void> {
-  const bytes = new Uint8Array(await file.slice(0, 16).arrayBuffer());
-  verifyFileContent(bytes, mimeType, file.name);
+/** True when the browser can render this input as a thumbnail. */
+export function canPreview(mimeType: string): boolean {
+  return kindForMime(mimeType) === 'image';
 }
 
-/** Read the original file bytes as a base64 data URL (documents sent unchanged). */
-export function readOriginalDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error('Could not read this file. Choose another file.'));
-    reader.readAsDataURL(blob);
-  });
+/** Read the leading bytes and verify content matches the declared MIME type. */
+export async function validateFileContent(file: File, mimeType: string): Promise<void> {
+  const bytes = new Uint8Array(await file.slice(0, 128).arrayBuffer());
+  verifyFileContent(bytes, mimeType, file.name, file.size);
 }
 
 const decoded = new Map<string, HTMLImageElement>();
+const prepared = new Map<string, { rotation: number; upload: PreparedUpload }>();
 
-/** Decode an image input for preview and optional canvas rotation. */
+/** Decode an image input only when canvas rotation is required. */
 export function loadDecodedImage(item: FileItem): Promise<HTMLImageElement> {
   const cached = decoded.get(item.id);
   if (cached) return Promise.resolve(cached);
@@ -79,68 +69,69 @@ export function loadDecodedImage(item: FileItem): Promise<HTMLImageElement> {
 
 export function forgetImage(id: string): void {
   decoded.delete(id);
+  prepared.delete(id);
 }
 
-export type RenderedInput = {
-  dataUrl: string;
-  /** MIME of the bytes in dataUrl (images are re-encoded as PNG on canvas). */
+export type PreparedUpload = {
+  blob: Blob;
   mimeType: string;
-  width: number;
-  height: number;
-  clamped: boolean;
+  filename: string;
 };
 
+function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('This browser could not prepare the rotated image.'));
+    }, 'image/png');
+  });
+}
+
 /**
- * Prepare a file for the OCR API. Documents (PDF/Word/PowerPoint) are forwarded
- * unchanged — the API detects format from file content and parses them itself.
- * Images are optionally rotated on a canvas and exported as PNG, with dimensions
- * clamped to stay inside the documented API limits.
+ * Prepare a file for the OCR API without copying document bytes through base64
+ * or re-encoding images that need no transform. Documents and unrotated images
+ * keep their original Blob; only a rotated image is redrawn on a canvas.
+ *
+ * Prepared payloads are cached per item and rotation so scheduler retries do
+ * not repeat the work.
  */
-export async function renderProcessed(item: FileItem): Promise<RenderedInput> {
-  if (isDocument(item)) {
-    return {
-      dataUrl: await readOriginalDataUrl(item.blob),
-      mimeType: item.mimeType,
-      width: 0,
-      height: 0,
-      clamped: false,
+export async function prepareUpload(item: FileItem): Promise<PreparedUpload> {
+  const cached = prepared.get(item.id);
+  if (cached && cached.rotation === item.rotation) return cached.upload;
+
+  let upload: PreparedUpload;
+  if (isDocument(item) || item.rotation % 360 === 0) {
+    upload = { blob: item.blob, mimeType: item.mimeType, filename: item.name };
+  } else {
+    const image = await loadDecodedImage(item);
+    const rotated = item.rotation % 180 !== 0;
+    const width = rotated ? image.naturalHeight : image.naturalWidth;
+    const height = rotated ? image.naturalWidth : image.naturalHeight;
+    if (!width || !height)
+      throw new Error(`Could not read “${item.name}”. The file may be damaged.`);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('This browser cannot process images. Try another browser.');
+
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    context.translate(width / 2, height / 2);
+    context.rotate((item.rotation * Math.PI) / 180);
+    context.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+
+    const stem = item.name.replace(/\.[^.]+$/, '') || 'ocr-output';
+    upload = {
+      blob: await canvasToBlob(canvas),
+      mimeType: 'image/png',
+      filename: `${stem}.${extensionForMime('image/png')}`,
     };
   }
 
-  const image = await loadDecodedImage(item);
-  const crop = item.crop ?? { x: 0, y: 0, w: image.naturalWidth, h: image.naturalHeight };
-  const rotated = item.rotation % 180 !== 0;
-  const baseWidth = rotated ? crop.h : crop.w;
-  const baseHeight = rotated ? crop.w : crop.h;
-  const clamp = Math.min(1, MAX_EXPORT_SIDE / Math.max(baseWidth, baseHeight));
-  const scale = item.scale * clamp;
-  const width = Math.max(1, Math.round(baseWidth * scale));
-  const height = Math.max(1, Math.round(baseHeight * scale));
-
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext('2d');
-  if (!context) throw new Error('This browser cannot process images. Try another browser.');
-
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = 'high';
-  context.translate(width / 2, height / 2);
-  context.scale(scale, scale);
-  context.rotate((item.rotation * Math.PI) / 180);
-  context.drawImage(
-    image,
-    crop.x, crop.y, crop.w, crop.h,
-    -crop.w / 2, -crop.h / 2, crop.w, crop.h
-  );
-
-  return {
-    dataUrl: canvas.toDataURL('image/png'),
-    mimeType: 'image/png',
-    width,
-    height,
-    clamped: clamp < 1,
-  };
+  prepared.set(item.id, { rotation: item.rotation, upload });
+  return upload;
 }
 
 /** Extension used when exporting the recognized text for a given input file. */

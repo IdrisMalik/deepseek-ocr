@@ -21,7 +21,10 @@ export type RetryOptions = {
 };
 
 /** Parse a Retry-After header (delta-seconds or HTTP-date) into milliseconds. */
-export function parseRetryAfter(value: string | null | undefined, now = Date.now()): number | undefined {
+export function parseRetryAfter(
+  value: string | null | undefined,
+  now = Date.now()
+): number | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
   if (/^\d+$/.test(trimmed)) return Math.max(0, Number(trimmed) * 1000);
@@ -47,7 +50,11 @@ export type RetryDelayOptions = {
  * interval (Retry-After) wins when present, capped to avoid a stalled client.
  * Shared by withRetry and the work queue so both use the same policy.
  */
-export function retryDelayMs(attempt: number, error: unknown, options: RetryDelayOptions = {}): number {
+export function retryDelayMs(
+  attempt: number,
+  error: unknown,
+  options: RetryDelayOptions = {}
+): number {
   const base = Math.max(0, options.baseDelayMs ?? 500);
   const cap = Math.max(0, options.maxDelayMs ?? 8000);
   const retryAfterCap = Math.max(0, options.maxRetryAfterMs ?? 60000);

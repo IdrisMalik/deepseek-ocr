@@ -9,7 +9,13 @@ const permanent = (): Retryable => Object.assign(new Error('permanent'), { retry
 const retryable = (error: unknown): boolean =>
   error instanceof Error && Boolean((error as Retryable).retryable);
 
-const base = { concurrency: 1, maxAttempts: 3, baseDelayMs: 1, jitterRatio: 0, isRetryable: retryable };
+const base = {
+  concurrency: 1,
+  maxAttempts: 3,
+  baseDelayMs: 1,
+  jitterRatio: 0,
+  isRetryable: retryable,
+};
 
 test('retries a transient failure then succeeds', async () => {
   let calls = 0;
@@ -156,7 +162,10 @@ test('a late resolution after abort cannot become a stale success', async () => 
   let release: ((value: number) => void) | undefined;
   const promise = mapWithRetries(
     [1],
-    () => new Promise<number>((resolve) => { release = resolve; }),
+    () =>
+      new Promise<number>((resolve) => {
+        release = resolve;
+      }),
     { ...base, signal: controller.signal }
   );
   await sleep(5);

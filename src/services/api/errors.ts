@@ -36,6 +36,9 @@ function stringField(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
+const TIMEOUT_MESSAGE = 'Recognition timed out. Try a smaller file or split the document.';
+const NON_RETRYABLE_BODY_MESSAGE = /password|parse|format|decoded|1000 pages|too large/i;
+
 /** Map documented DeepSeek OCR HTTP statuses to actionable messages. */
 export function mapHttpError(
   status: number,
@@ -47,16 +50,44 @@ export function mapHttpError(
   const providerCode = stringField(details.code);
 
   const table: Record<number, { message: string; code: string; retryable: boolean }> = {
-    400: { message: 'Could not process this file. Check the format and try again.', code: 'invalid_request', retryable: false },
-    401: { message: 'Invalid API key. Check it in API key settings.', code: 'unauthorized', retryable: false },
-    402: { message: 'Insufficient balance. Top up your account and try again.', code: 'insufficient_balance', retryable: false },
-    403: { message: 'This API key cannot access the OCR API.', code: 'forbidden', retryable: false },
-    408: { message: 'Upload timed out. Check your connection and try again.', code: 'upload_timeout', retryable: true },
-    413: { message: 'This file is larger than the 100 MB limit. Choose a smaller file.', code: 'file_too_large', retryable: false },
+    400: {
+      message: 'Could not process this file. Check the format and try again.',
+      code: 'invalid_request',
+      retryable: false,
+    },
+    401: {
+      message: 'Invalid API key. Check it in API key settings.',
+      code: 'unauthorized',
+      retryable: false,
+    },
+    402: {
+      message: 'Insufficient balance. Top up your account and try again.',
+      code: 'insufficient_balance',
+      retryable: false,
+    },
+    403: {
+      message: 'This API key cannot access the OCR API.',
+      code: 'forbidden',
+      retryable: false,
+    },
+    408: {
+      message: 'Upload timed out. Check your connection and try again.',
+      code: 'upload_timeout',
+      retryable: true,
+    },
+    413: {
+      message: 'This file is larger than the 100 MB limit. Choose a smaller file.',
+      code: 'file_too_large',
+      retryable: false,
+    },
     429: { message: 'Too many requests. Try again later.', code: 'rate_limited', retryable: true },
-    500: { message: 'DeepSeek could not process the file. Try again.', code: 'provider_error', retryable: true },
+    500: {
+      message: 'DeepSeek could not process the file. Try again.',
+      code: 'provider_error',
+      retryable: true,
+    },
     503: { message: 'DeepSeek is busy. Try again shortly.', code: 'service_busy', retryable: true },
-    504: { message: 'The request timed out. Try again or use a smaller file.', code: 'gateway_timeout', retryable: true },
+    504: { message: TIMEOUT_MESSAGE, code: 'gateway_timeout', retryable: false },
   };
 
   const mapped = table[status] ?? {
@@ -65,6 +96,8 @@ export function mapHttpError(
     retryable: status >= 500,
   };
 
+  // Browsers only expose Retry-After when the server opts in through CORS.
+  // The scheduler still applies exponential backoff when it is unavailable.
   const retryAfterMs =
     mapped.retryable && (status === 429 || status === 503)
       ? parseRetryAfter(headers?.get('retry-after') ?? undefined)
@@ -83,7 +116,11 @@ export function parseOcrResponse(body: string, fallbackName: string): FileOcrRes
   const trimmed = body.replace(/^\s+/, '');
   let data: Record<string, unknown>;
   try {
-    data = JSON.parse(trimmed) as Record<string, unknown>;
+    const parsed: unknown = JSON.parse(trimmed);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Response is not an object.');
+    }
+    data = parsed as Record<string, unknown>;
   } catch {
     throw new OcrError('Could not read DeepSeek’s response. Try again.', {
       code: 'bad_response',
@@ -91,42 +128,90 @@ export function parseOcrResponse(body: string, fallbackName: string): FileOcrRes
     });
   }
 
-  const embedded = asErrorLike(data);
   if (data.error !== undefined) {
-    const message = stringField(embedded.message) ?? 'DeepSeek could not extract text from this file.';
+    const embedded = asErrorLike(data);
+    const message =
+      stringField(embedded.message) ?? 'DeepSeek could not extract text from this file.';
     const code = stringField(embedded.code) ?? stringField(embedded.type) ?? 'provider_error';
-    const nonRetryable = /password|parse|format|decoded|1000 pages|too large/i.test(message);
+    const isTimeout =
+      code === 'gateway_timeout_error' ||
+      /did not finish (?:in time|within 180 seconds)/i.test(message);
+    if (isTimeout) {
+      throw new OcrError(TIMEOUT_MESSAGE, { code: 'gateway_timeout_error', retryable: false });
+    }
+    const nonRetryable = NON_RETRYABLE_BODY_MESSAGE.test(message);
     throw new OcrError(message, { code, retryable: !nonRetryable });
   }
 
-  if (!Array.isArray(data.pages) || data.pages.length === 0) {
+  const rawPages = data.pages;
+  if (!Array.isArray(rawPages) || rawPages.length === 0) {
     throw new OcrError('No pages were returned. Try again or choose another file.', {
       code: 'empty_response',
       retryable: true,
     });
   }
 
-  const pages: PageResult[] = data.pages.map((raw, index) => {
+  if (typeof data.page_count === 'number' && data.page_count !== rawPages.length) {
+    throw new OcrError('DeepSeek returned an inconsistent page count. Try again.', {
+      code: 'bad_response',
+      retryable: true,
+    });
+  }
+
+  const seen = new Set<number>();
+  const pages: PageResult[] = rawPages.map((raw) => {
     const page = (raw ?? {}) as Record<string, unknown>;
+    if (
+      typeof page.index !== 'number' ||
+      !Number.isInteger(page.index) ||
+      page.index < 0 ||
+      page.index >= rawPages.length
+    ) {
+      throw new OcrError('DeepSeek returned an invalid page index. Try again.', {
+        code: 'bad_response',
+        retryable: true,
+      });
+    }
+    if (seen.has(page.index)) {
+      throw new OcrError('DeepSeek returned a duplicate page index. Try again.', {
+        code: 'bad_response',
+        retryable: true,
+      });
+    }
+    seen.add(page.index);
     if (typeof page.text !== 'string') {
       throw new OcrError('DeepSeek returned an incomplete result. Try again.', {
         code: 'bad_response',
         retryable: true,
       });
     }
-    const finish = page.finish_reason === 'length' ? 'length' : page.finish_reason === 'stop' ? 'stop' : 'unknown';
-    return { index: typeof page.index === 'number' ? page.index : index, text: page.text, finishReason: finish };
+    const finish =
+      page.finish_reason === 'length'
+        ? 'length'
+        : page.finish_reason === 'stop'
+          ? 'stop'
+          : 'unknown';
+    return {
+      index: page.index,
+      text: page.text,
+      finishReason: finish,
+    };
   });
 
+  // Preserve page order even if a provider response arrives out of order.
+  pages.sort((a, b) => a.index - b.index);
+
   if (pages.every((page) => page.text.trim() === '')) {
-    throw new OcrError(
-      'No text was found. Try a clearer file.',
-      { code: 'empty_result', retryable: false }
-    );
+    throw new OcrError('No text was found. Try a clearer file.', {
+      code: 'empty_result',
+      retryable: false,
+    });
   }
 
   const usage = (data.usage ?? {}) as Record<string, unknown>;
+  const id = stringField(data.id);
   return {
+    ...(id ? { id } : {}),
     name: fallbackName,
     pages,
     inputTokens: typeof usage.input_tokens === 'number' ? usage.input_tokens : undefined,

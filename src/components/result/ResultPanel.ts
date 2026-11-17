@@ -14,6 +14,7 @@ export function renderResult(): void {
   const panel = el<HTMLElement>('resultPanel');
   const tabs = el<HTMLDivElement>('resultTabs');
   const status = el<HTMLSpanElement>('resultStatus');
+  const resultId = el<HTMLSpanElement>('resultId');
   const editor = el<HTMLTextAreaElement>('textEditor');
   const stats = el<HTMLSpanElement>('textStats');
   const truncatedNotice = el<HTMLParagraphElement>('truncatedNotice');
@@ -23,6 +24,7 @@ export function renderResult(): void {
   if (done.length === 0 || state.activeId === null) {
     panel.hidden = true;
     main.classList.remove('has-result');
+    resultId.hidden = true;
     return;
   }
 
@@ -35,6 +37,8 @@ export function renderResult(): void {
   main.classList.add('has-result');
 
   // Tabs only appear when they help: more than one result.
+  const focused = document.activeElement as HTMLElement | null;
+  const focusedTabId = focused?.classList.contains('result-tab') ? focused.dataset.id : undefined;
   tabs.hidden = done.length < 2;
   tabs.replaceChildren();
   if (done.length >= 2) {
@@ -42,6 +46,7 @@ export function renderResult(): void {
       const tab = document.createElement('button');
       tab.type = 'button';
       tab.className = `result-tab${state.activeId === id ? ' active' : ''}`;
+      tab.dataset.id = id;
       tab.textContent = label;
       tab.setAttribute('aria-pressed', String(state.activeId === id));
       tab.addEventListener('click', () => {
@@ -52,6 +57,14 @@ export function renderResult(): void {
     };
     makeTab('all', t('allFiles'));
     done.forEach((item) => makeTab(item.id, item.name));
+
+    // Rebuilding tabs destroys the focused node; keep keyboard position stable.
+    if (focusedTabId) {
+      const restored = Array.from(tabs.querySelectorAll<HTMLButtonElement>('.result-tab')).find(
+        (tab) => tab.dataset.id === focusedTabId
+      );
+      restored?.focus();
+    }
   }
 
   const active = state.items.find((i) => i.id === state.activeId) ?? null;
@@ -59,10 +72,24 @@ export function renderResult(): void {
   status.textContent = t('done');
   status.className = 'status-pill ok';
 
+  resultId.hidden = true;
+  resultId.textContent = '';
+  if (state.activeId !== 'all' && active?.result?.id) {
+    resultId.textContent = `ID: ${active.result.id}`;
+    resultId.title = `DeepSeek recognition ID: ${active.result.id}`;
+    resultId.hidden = false;
+  }
+
   const text = currentText();
   if (editor.value !== text) editor.value = text;
   stats.textContent = describeStats(text);
-  truncatedNotice.hidden = !hasTruncatedPages(done.map((item) => item.result));
+  const truncated =
+    state.activeId === 'all'
+      ? hasTruncatedPages(done.map((item) => item.result))
+      : active?.result
+        ? hasTruncatedPages([active.result])
+        : false;
+  truncatedNotice.hidden = !truncated;
   revert.hidden =
     state.activeId === 'all' ? state.combinedEdit == null : active?.editedText == null;
 

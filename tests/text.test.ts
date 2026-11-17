@@ -35,6 +35,8 @@ test('cleanOcrText removes both documented and live box closing forms', () => {
   const live = '<｜ref｜>Title<｜/ref｜><｜box｜>[[52, 40, 948, 96]]<｜/box｜> Title text';
   assert.equal(cleanOcrText(documented), 'Title Title text');
   assert.equal(cleanOcrText(live), 'Title Title text');
+  assert.equal(cleanOcrText('<｜ref｜>Title</｜ref｜> body'), 'Title body');
+  assert.equal(cleanOcrText('<｜ref｜>Title<｜/ref｜> body'), 'Title body');
 });
 
 test('cleanOcrText removes an unclosed box coordinate span', () => {
@@ -46,6 +48,19 @@ test('cleanOcrText is safe on plain text and empty input', () => {
   assert.equal(cleanOcrText('Hello, world!'), 'Hello, world!');
   assert.equal(cleanOcrText(''), '');
   assert.equal(cleanOcrText('  a  \n\n\n b  '), 'a\n\n b');
+});
+
+test('cleanOcrText keeps recognized text inside ref tokens', () => {
+  const raw = '<｜ref｜>Invoice<｜/ref｜> total and <｜ref｜>客户名称<｜/ref｜> detail';
+  assert.equal(cleanOcrText(raw), 'Invoice total and 客户名称 detail');
+});
+
+test('cleanOcrText handles degenerate trailing whitespace in linear time', () => {
+  const input = ' '.repeat(100_000) + 'x';
+  const started = performance.now();
+  assert.equal(cleanOcrText(input), 'x');
+  const elapsed = performance.now() - started;
+  assert.ok(elapsed < 1_000, `cleanup took ${elapsed.toFixed(0)}ms`);
 });
 
 test('raw and clean views differ only by token cleanup', () => {
@@ -70,7 +85,7 @@ test('truncated pages are detected', () => {
 });
 
 test('export helpers preserve unicode and produce valid filenames', () => {
-  assert.equal(toPlainTextExport('x', 'Line\n'), 'Line\n');
+  assert.equal(toPlainTextExport('Line\n'), 'Line\n');
   assert.equal(toMarkdownExport('My Scan', 'Line'), '# My Scan\n\nLine\n');
   assert.equal(safeFileStem('my scan (1).PNG'), 'my-scan-1');
   assert.equal(safeFileStem('!!!'), 'ocr-output');
