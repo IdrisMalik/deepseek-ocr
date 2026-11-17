@@ -4,7 +4,7 @@
 
 A static, browser-only OCR workstation for the [official DeepSeek OCR API](https://api-docs.deepseek.com/guides/ocr). Upload images, PDFs, Word documents, or PowerPoint files, extract editable text in Standard or Rich layout mode, then edit, copy, or export the result. No application backend is required.
 
-You can [try the app online](https://idrismalik.github.io/deepseek-ocr/) or [open the demo without an API key](https://idrismalik.github.io/deepseek-ocr/?demo=1). Live OCR requires an internet connection and a DeepSeek API key with available balance.
+**[Try the app online](https://idrismalik.github.io/deepseek-ocr/)** · [Open demo mode without a key](https://idrismalik.github.io/deepseek-ocr/?demo=1). Live OCR requires an internet connection and a DeepSeek API key with available balance.
 
 ## Getting started
 
