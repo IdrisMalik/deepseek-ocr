@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "import"],
+  "env": {
+    "builtin": true
+  },
+  "rules": {
+    "no-console": "error",
+    "no-debugger": "error",
+    "no-unused-vars": ["error", { "caughtErrors": "none" }],
+    "import/no-default-export": "error",
+    "import/no-cycle": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/ban-ts-comment": [
+      "error",
+      {
+        "minimumDescriptionLength": 10
+      }
+    ]
+  }
+}

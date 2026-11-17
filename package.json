@@ -1,0 +1,29 @@
+{
+  "name": "deepseek-ocr-studio",
+  "version": "0.1.0",
+  "description": "Static, browser-only OCR workstation using the official DeepSeek OCR API with a user-provided key.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run type && vite build",
+    "type": "tsc --noEmit",
+    "lint": "oxlint src tests",
+    "format": "oxfmt --write .",
+    "test": "tsx --test tests/*.test.ts",
+    "preview": "vite preview --host localhost --port 4173"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "oxfmt": "^0.48.0",
+    "oxlint": "^1.63.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
+}

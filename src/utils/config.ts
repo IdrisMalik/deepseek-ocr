@@ -1,0 +1,25 @@
+/** Static configuration for the browser-only (GitHub Pages) build. */
+import { acceptAttribute } from '../services/formats.js';
+
+export const clientConfig = {
+  ocrUrl: 'https://api.deepseek.com/v1/tools/ocr',
+  verifyUrl: 'https://api.deepseek.com/models',
+  maxFiles: 20,
+  maxFileBytes: 100 * 1024 * 1024,
+  // Official OCR limit: 15 recognitions in progress per account, separate from
+  // chat models. Stay well below it so other clients using the key keep headroom.
+  concurrency: 6,
+  // At most 3 billed OCR requests per file (first attempt + 2 retries).
+  maxAttempts: 3,
+  retryBaseMs: 500,
+  retryMaxMs: 8_000,
+  retryMaxRetryAfterMs: 30_000,
+  retryJitterRatio: 0.25,
+  requestTimeoutMs: 180_000,
+  accept: acceptAttribute(),
+  keyStorageName: 'deepseek-ocr:api-key',
+} as const;
+
+/** Demo mode via ?demo=1 — deterministic local responses, no API key or cost. */
+export const demoMode = (): boolean =>
+  typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === '1';
