@@ -34,16 +34,16 @@ The output is written to `dist/`. Relative asset paths keep it loadable from a s
 ## Usage
 
 1. Add files with **browse**, drag and drop, or paste from the clipboard. The workspace accepts up to 20 files, up to 100 MiB each.
-2. Choose **Standard text** for plain text, or **Rich layout** to recognize every page with layout-aware output.
-3. Select **Extract text**. Up to six requests run concurrently, and completed files appear as they settle.
-4. Edit the recognized text, copy it, or download it as `.txt` or `.md`. **Revert** restores the last extracted text. Identifiers printed in the source document remain part of the text and are included in exports.
+2. Choose **Standard text** for plain text, or **Rich layout** for layout-aware page OCR that can preserve headings and tables. Standard is the safer default for long, dense documents.
+3. Select **Extract text**. New or pending files are processed while completed results are kept; when every file is already done, the action becomes **Re-extract all**. Up to six requests run concurrently, and completed files appear as they settle.
+4. Edit the recognized text, copy it, or download it as `.txt` or `.md`. **Revert** restores the last extracted text. Rotating a completed image clears its result so it can be extracted again in the new orientation. Identifiers printed in the source document remain part of the text and are included in exports.
 
 Cancelling or clearing the workspace aborts in-flight requests and discards pending retries. Removing the API key during a batch also cancels that batch. Files and results stay in memory for the current page; only the API key is persisted.
 
 ## Features
 
 - 11 input formats: PNG, JPEG, WebP, GIF, BMP, TIFF, PDF, DOC, DOCX, PPT, and PPTX. The app checks the declared type, size, and leading bytes before upload; full document parsing is delegated to DeepSeek.
-- Standard text and Rich layout recognition, with layout-control tokens removed from editable output.
+- Standard text and Rich layout recognition, with layout tokens removed and simple HTML tables normalized to readable Markdown rows.
 - A bounded, work-conserving queue with per-file retries, rate-limit handling, cancellation, and progress.
 - Editable results with Revert, copy, and `.txt` / `.md` downloads.
 - Responsive single-pane and dual-pane layouts, light and dark themes, keyboard navigation, visible focus indicators, and reduced-motion support.
@@ -68,13 +68,24 @@ Results are not persisted. The production bundle has no runtime npm dependencies
 | `npm run format`       | Format source and tests           |
 | `npm run format:check` | Check source and test formatting  |
 | `npm test`             | Run automated tests               |
+| `npm run test:ocr`     | Validate and run the OCR evaluation suite |
 | `npm run preview`      | Preview the static build          |
 
 ### Testing
 
 The Node test suite covers the request queue, retry policy, response parsing and invariants, file validation, text cleanup, export helpers, upload preparation, key visibility, and release metadata/config. Run it with `npm test`.
 
-UI behavior, focus restoration, responsive layouts, CSP enforcement, and failure recovery are checked in a browser during release validation. Real OCR accuracy and multilingual quality require an authorized live API account and ground-truth documents; they are not asserted by the unit suite.
+UI behavior, focus restoration, responsive layouts, CSP enforcement, and failure recovery are checked in a browser during release validation.
+
+### OCR evaluation suite
+
+`tests/ocr-eval/` contains 29 fixtures (20 images and 9 documents), page-level ground truth, 134 authorized API recordings, offline parser checks and regression metrics, and a gated live runner. It is an evidence and regression suite for this app, not a production accuracy claim for arbitrary documents.
+
+```sh
+npm run test:ocr
+```
+
+`test:ocr` runs the structural validator and the offline evaluator; `test:ocr:validate` and `test:ocr:eval` run each part separately. See its [`README.md`](tests/ocr-eval/README.md) before running live checks; live runs use your API key and incur provider charges.
 
 ## Architecture
 
@@ -83,7 +94,7 @@ The application is a single-page TypeScript build with no backend and no runtime
 1. Intake resolves the MIME type, checks size and leading bytes, and rejects unsupported or empty files.
 2. Documents and unrotated images are sent as their original `Blob`, avoiding base64 and canvas copies. A rotated image is redrawn as PNG on a canvas. Prepared payloads are cached across retries.
 3. A bounded queue sends one `multipart/form-data` request per file to `POST https://api.deepseek.com/v1/tools/ocr` with the selected `purpose`.
-4. Responses are validated for page count, page indexes, duplicates, and ordering, parsed page by page, stripped of layout-control tokens, and shown for editing and export.
+4. Responses are validated for page count, page indexes, duplicates, and ordering, parsed page by page, normalized from layout tokens and simple HTML tables into editable text, and shown for editing and export.
 
 The queue runs at most six requests at once. DeepSeek allows 15 recognitions in progress per account, so six leaves headroom for other clients using the same key. Each file gets three attempts. A transient failure releases its queue slot before waiting, using exponential backoff from 500 ms to 8 s with ±25% jitter.
 
@@ -138,8 +149,11 @@ For a fork, enable **Settings → Pages → Build and deployment → GitHub Acti
 - The browser-stored key is XSS-sensitive; that is the trade-off for a server-free deployment. The production CSP reduces, but does not eliminate, that risk.
 - Live calls are billed by DeepSeek through your own key. Cancelling stops the client request, but a recognition that DeepSeek has already received may finish and be billed.
 - DeepSeek may return empty text; the app reports it as a non-retryable error.
-- Rich layout output is recognized page by page, but layout-control tokens are removed from the editable text and visual formatting is not reconstructed.
-- No live OCR accuracy or multilingual benchmark is included. The production bundle has no runtime npm dependencies and the production audit is clean; development-only advisories may remain in build tooling when no patched release exists (see the [security policy](SECURITY.md)).
+- Rich layout output is recognized page by page. It can preserve headings, emphasis, and simple tables as editable Markdown, but it can also miss or reorder text on dense multi-column pages. Use Standard for long dense documents; Standard truncation offers a manual **Try Rich layout** retry.
+- The OCR model may omit running headers, footers, or some display titles. In testing, a two-column report lost its top display title in both modes.
+- Multi-page TIFF and animated GIF behavior is undocumented by the API. In testing, each returned one page/frame; split multi-frame files before upload if every page is required. The app shows a one-time notice when a TIFF or GIF is added.
+- The included evaluation suite records provider behavior on synthetic fixtures. It is not a production OCR accuracy or multilingual benchmark for arbitrary documents or handwriting.
+- The production bundle has no runtime npm dependencies and the production audit is clean; development-only advisories may remain in build tooling when no patched release exists (see the [security policy](SECURITY.md)).
 
 Official documentation: [OCR guide](https://api-docs.deepseek.com/guides/ocr) · [OCR API reference](https://api-docs.deepseek.com/api/ocr)
 

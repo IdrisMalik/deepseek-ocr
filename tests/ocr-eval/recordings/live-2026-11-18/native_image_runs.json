@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "recorded_at": "2026-11-18",
+  "source": "Authorized DeepSeek OCR API runs recorded 2026-11-18 (native_image.json: 2 runs).",
+  "notes": "Additional T22 runs that exercise the embedded chart path. One run per purpose.",
+  "run_count": 2,
+  "runs": [
+    {
+      "fixture_id": "T22",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.661,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>title<｜/ref｜><｜box｜>[[146,120,302,139]]<｜/box｜> Atlas Dashboard\n<｜ref｜>text<｜/ref｜><｜box｜>[[146,144,589,163]]<｜/box｜> The chart summarizes revenue for the first three quarters.\n<｜ref｜>chart<｜/ref｜><｜box｜>[[206,233,728,444]]<｜/box｜> \n<｜ref｜>chart_caption<｜/ref｜><｜box｜>[[170,191,394,212]]<｜/box｜> Revenue by Quarter\n<｜ref｜>text<｜/ref｜><｜box｜>[[146,453,394,472]]<｜/box｜> Prepared by the finance team.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 416,
+        "output_tokens": 97,
+        "total_tokens": 513
+      },
+      "error": null,
+      "response_bytes": 754,
+      "content_type": "application/json"
+    },
+    {
+      "fixture_id": "T22",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.564,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "## Atlas Dashboard\n\nThe chart summarizes revenue for the first three quarters.\n\nRevenue by Quarter\n\nQuarter\n\nQ3\n\nRevenue\n\n180\n\nChange\n\n+20%\n\nPrepared by the finance team.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 401,
+        "output_tokens": 40,
+        "total_tokens": 441
+      },
+      "error": null,
+      "response_bytes": 446,
+      "content_type": "application/json"
+    }
+  ]
+}

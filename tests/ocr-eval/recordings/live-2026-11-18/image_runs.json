@@ -1,0 +1,625 @@
+{
+  "schema_version": "1.0",
+  "recorded_at": "2026-11-18",
+  "source": "Authorized DeepSeek OCR API runs recorded 2026-11-18 (28 successful image runs, T01-T15).",
+  "notes": "One run per supported fixture and purpose for the image fixtures. T12 is Rich-only and T15 is text-only. These runs predate the 2026-11-18 regeneration of T01-T15 image bytes; see README generation note. Derived fields stripped; pages and envelope metadata retained.",
+  "run_count": 28,
+  "runs": [
+    {
+      "fixture_id": "T01",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.492,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>sub_title<｜/ref｜><｜box｜>[[64,179,597,233]]<｜/box｜> # Canal Sensor Calibration \n<｜ref｜>text<｜/ref｜><｜box｜>[[64,275,323,313]]<｜/box｜> Station: North Gate 7 \n<｜ref｜>text<｜/ref｜><｜box｜>[[64,343,373,380]]<｜/box｜> Date: 18 November 2026 \n<｜ref｜>text<｜/ref｜><｜box｜>[[64,409,295,447]]<｜/box｜> Reading: 14.25 cm \n<｜ref｜>text<｜/ref｜><｜box｜>[[64,475,351,512]]<｜/box｜> Status: within tolerance \n<｜ref｜>sub_title<｜/ref｜><｜box｜>[[64,584,191,614]]<｜/box｜> ## NEXT STEPS \n<｜ref｜>text<｜/ref｜><｜box｜>[[74,643,366,679]]<｜/box｜> 1. Check valve alignment. \n<｜ref｜>text<｜/ref｜><｜box｜>[[74,700,483,736]]<｜/box｜> 2. Replace filter before 1,800 cycles. \n<｜ref｜>text<｜/ref｜><｜box｜>[[74,756,479,792]]<｜/box｜> 3. Record the next reading at 16:30.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 428,
+        "output_tokens": 203,
+        "total_tokens": 631
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T01",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.612,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "FIELD NOTES 042\n\n# Canal Sensor Calibration\n\nStation: North Gate 7\n\nDate: 18 November 2026\n\nReading: 14.25 cm\n\nStatus: within tolerance\n\n## NEXT STEPS\n\n1. Check valve alignment.\n\n2. Replace filter before 1,800 cycles.\n\n3. Record the next reading at 16:30.\n\nReference copy • Sheet 1",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 413,
+        "output_tokens": 81,
+        "total_tokens": 494
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T02",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.556,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>text<｜/ref｜><｜box｜>[[88,86,401,117]]<｜/box｜> NORTH QUAY / OPERATIONS \n<｜ref｜>text<｜/ref｜><｜box｜>[[88,225,359,248]]<｜/box｜> SERVICE BULLETIN 18-B \n<｜ref｜>title<｜/ref｜><｜box｜>[[88,262,611,309]]<｜/box｜> # Calibration window \n<｜ref｜>text<｜/ref｜><｜box｜>[[88,333,586,362]]<｜/box｜> Planned work for the river-level sensor network \n<｜ref｜>text<｜/ref｜><｜box｜>[[124,436,167,459]]<｜/box｜> START \n<｜ref｜>text<｜/ref｜><｜box｜>[[124,467,238,498]]<｜/box｜> 06:30 UTC \n<｜ref｜>text<｜/ref｜><｜box｜>[[124,509,206,532]]<｜/box｜> 18 Nov 2026 \n<｜ref｜>text<｜/ref｜><｜box｜>[[522,436,611,459]]<｜/box｜> EXPECTED DURATION \n<｜ref｜>text<｜/ref｜><｜box｜>[[522,467,657,498]]<｜/box｜> 45 minutes \n<｜ref｜>text<｜/ref｜><｜box｜>[[522,509,721,532]]<｜/box｜> Service may pause briefly \n<｜ref｜>sub_title<｜/ref｜><｜box｜>[[88,565,280,593]]<｜/box｜> ## Affected stations \n<｜ref｜>text<｜/ref｜><｜box｜>[[88,611,586,638]]<｜/box｜> North Gate 7 • Canal Bend 2 • East Lock 4 \n<｜ref｜>text<｜/ref｜><｜box｜>[[88,681,167,705]]<｜/box｜> Contact \n<｜ref｜>text<｜/ref｜><｜box｜>[[88,716,551,742]]<｜/box｜> Duty engineer: Mina Rao / Extension 204 \n<｜ref｜>text<｜/ref｜><｜box｜>[[88,784,551,811]]<｜/box｜> NOTICE: readings may be delayed during calibration.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 488,
+        "output_tokens": 314,
+        "total_tokens": 802
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T02",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.541,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "NORTH QUAY / OPERATIONS\n\nSERVICE BULLETIN 18-B\n\n# Calibration window\n\nPlanned work for the river-level sensor network\n\nSTART\n\n06:30 UTC\n\n18 Nov 2026\n\nEXPECTED DURATION\n\n45 minutes\n\nService may pause briefly\n\n## Affected stations\n\nNorth Gate 7 • Canal Bend 2 • East Lock 4\n\nContact\n\nDuty engineer: Mina Rao / Extension 204\n\nNOTICE: readings may be delayed during calibration.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 473,
+        "output_tokens": 105,
+        "total_tokens": 578
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T03",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.534,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>sub_title<｜/ref｜><｜box｜>[[64,67,432,95]]<｜/box｜> # A two-part field report \n<｜ref｜>text<｜/ref｜><｜box｜>[[64,102,372,117]]<｜/box｜> Issue 06 / Monitoring / 18 November 2026 \n<｜ref｜>sub_title<｜/ref｜><｜box｜>[[64,159,179,174]]<｜/box｜> ## LEFT COLUMN \n<｜ref｜>text<｜/ref｜><｜box｜>[[64,193,444,263]]<｜/box｜> The upper canal remained steady through the morning inspection. At North Gate 7, the sensor recorded 14.25 cm at 09:10 UTC. \n<｜ref｜>text<｜/ref｜><｜box｜>[[64,298,444,369]]<｜/box｜> A second reading, taken twelve minutes later, was 14.22 cm. The difference stayed inside the expected operating range. \n<｜ref｜>text<｜/ref｜><｜box｜>[[64,402,413,447]]<｜/box｜> Field staff cleaned the optical window and checked the cable housing for moisture. \n<｜ref｜>sub_title<｜/ref｜><｜box｜>[[530,159,656,174]]<｜/box｜> ## RIGHT COLUMN \n<｜ref｜>text<｜/ref｜><｜box｜>[[530,193,898,263]]<｜/box｜> At Canal Bend 2, the team replaced the inlet filter and restarted the data logger. The first complete sample arrived at 10:42. \n<｜ref｜>text<｜/ref｜><｜box｜>[[530,298,923,369]]<｜/box｜> East Lock 4 will remain on the manual schedule until the next scheduled calibration. The duty engineer will review the readings before the evening transfer. \n<｜ref｜>text<｜/ref｜><｜box｜>[[530,402,863,447]]<｜/box｜> Next review: 18:00 UTC / Ref. WR-206",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 641,
+        "output_tokens": 321,
+        "total_tokens": 962
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T03",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.514,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "A two-part field report\n\nIssue 06 / Monitoring / 18 November 2026\n\nLEFT COLUMN\n\nThe upper canal remained steady through the morning inspection. At North Gate 7, the sensor recorded 14.25 cm at 09:10 UTC.\n\nA second reading, taken twelve minutes later, was 14.22 cm. The difference stayed inside the expected operating range.\n\nField staff cleaned the optical window and checked the cable housing for moisture.\n\nRIGHT COLUMN\n\nAt Canal Bend 2, the team replaced the inlet filter and restarted the data logger. The first complete sample arrived at 10:42.\n\nEast Lock 4 will remain on the manual schedule until the next scheduled calibration. The duty engineer will review the readings before the evening transfer.\n\nNext review: 18:00 UTC / Ref. WR-206",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 626,
+        "output_tokens": 170,
+        "total_tokens": 796
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T04",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 5.263,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>sub_title<｜/ref｜><｜box｜>[[49,79,373,121]]<｜/box｜> PARTS RECEIPT 5031 \n<｜ref｜>text<｜/ref｜><｜box｜>[[49,140,213,167]]<｜/box｜> Warehouse 4 / Batch C \n<｜ref｜>table<｜/ref｜><｜box｜>[[49,240,938,642]]<｜/box｜> <table><tr><td>Item</td><td>Code</td><td>Quantity</td><td>Unit price</td></tr><tr><td>Valve seal</td><td>VS-14</td><td>12</td><td>4.80</td></tr><tr><td>Mesh filter</td><td>MF-08</td><td>6</td><td>11.25</td></tr><tr><td>Gauge clip</td><td>GC-03</td><td>20</td><td>1.50</td></tr></table>\n<｜ref｜>text<｜/ref｜><｜box｜>[[49,701,252,737]]<｜/box｜> Subtotal: 154.50 \n<｜ref｜>text<｜/ref｜><｜box｜>[[49,773,223,800]]<｜/box｜> Approved by: Lena Ortiz",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 462,
+        "output_tokens": 236,
+        "total_tokens": 698
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T04",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 5.244,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "PARTS RECEIPT 5031\n\nWarehouse 4 / Batch C\n\n<table border=\"1\"><tr><td>Item</td><td>Code</td><td>Quantity</td><td>Unit price</td></tr><tr><td>Valve seal</td><td>VS-14</td><td>12</td><td>4.80</td></tr><tr><td>Mesh filter</td><td>MF-08</td><td>6</td><td>11.25</td></tr><tr><td>Gauge clip</td><td>GC-03</td><td>20</td><td>1.50</td></tr></table>\n\nSubtotal: 154.50\n\nApproved by: Lena Ortiz",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 447,
+        "output_tokens": 169,
+        "total_tokens": 616
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T05",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.34,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>sub_title<｜/ref｜><｜box｜>[[63,58,408,98]]<｜/box｜> WEEKLY PUMP OUTPUT \n<｜ref｜>text<｜/ref｜><｜box｜>[[63,114,302,141]]<｜/box｜> Station North / litres per hour \n<｜ref｜>image<｜/ref｜><｜box｜>[[721,130,881,159]]<｜/box｜>  \n<｜ref｜>image<｜/ref｜><｜box｜>[[71,229,910,829]]<｜/box｜>  \n<｜ref｜>text<｜/ref｜><｜box｜>[[63,882,312,908]]<｜/box｜> Peak: THU 93 / Lowest: WED 61",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 488,
+        "output_tokens": 100,
+        "total_tokens": 588
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T05",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.495,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "## WEEKLY PUMP OUTPUT\n\nStation North / litres per hour\n\nMeasured output\n\nPeak: THU 93 / Lowest: WED 61",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 473,
+        "output_tokens": 33,
+        "total_tokens": 506
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T06",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.507,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>title<｜/ref｜><｜box｜>[[383,252,629,400]]<｜/box｜> MORNING\nMARKET \n<｜ref｜>text<｜/ref｜><｜box｜>[[415,468,590,509]]<｜/box｜> OPEN 07:30 \n<｜ref｜>text<｜/ref｜><｜box｜>[[455,582,551,616]]<｜/box｜> EXIT →",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 404,
+        "output_tokens": 59,
+        "total_tokens": 463
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T06",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.377,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "## MORNING MARKET\n\nOPEN 07:30\n\nEXIT →",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 389,
+        "output_tokens": 16,
+        "total_tokens": 405
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T07",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.437,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>text<｜/ref｜><｜box｜>[[58,176,398,222]]<｜/box｜> Cafe reopened at 9:15. \n<｜ref｜>text<｜/ref｜><｜box｜>[[58,308,206,351]]<｜/box｜> समय: 09:15 \n<｜ref｜>text<｜/ref｜><｜box｜>[[58,408,195,454]]<｜/box｜> जल संग्रह केंद्र \n<｜ref｜>text<｜/ref｜><｜box｜>[[58,555,263,607]]<｜/box｜> 会议地点：北门 \n<｜ref｜>text<｜/ref｜><｜box｜>[[58,662,227,705]]<｜/box｜> 入口开放 09:15 \n<｜ref｜>text<｜/ref｜><｜box｜>[[58,819,437,844]]<｜/box｜> Synthetic multilingual sample; language coverage is exploratory.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 524,
+        "output_tokens": 137,
+        "total_tokens": 661
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T07",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.436,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "Cafe reopened at 9:15.\n\nसमय: 09:15\n\nजल संग्रह केंद्र\n\n会议地点：北门\n\n入口开放 09:15\n\nSynthetic multilingual sample; language coverage is exploratory.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 509,
+        "output_tokens": 52,
+        "total_tokens": 561
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T08",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.522,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>sub_title<｜/ref｜><｜box｜>[[60,77,231,111]]<｜/box｜> PRODUCT LABEL \n<｜ref｜>sub_title<｜/ref｜><｜box｜>[[71,206,419,245]]<｜/box｜> RIVER-SAFE FILTER CARTRIDGE \n<｜ref｜>text<｜/ref｜><｜box｜>[[71,276,337,304]]<｜/box｜> Model: RS-14 Batch: 61B Net: 250 ml \n<｜ref｜>text<｜/ref｜><｜box｜>[[71,333,355,359]]<｜/box｜> Store dry. Keep the seal intact before installation. \n<｜ref｜>text<｜/ref｜><｜box｜>[[71,391,405,414]]<｜/box｜> Replace after 1,800 cycles or by 01 Mar 2027, whichever comes first. \n<｜ref｜>text<｜/ref｜><｜box｜>[[71,441,348,462]]<｜/box｜> Packed 18 Nov 2026 / Lot office: North Quay / Code: NQ-61804 \n<｜ref｜>sub_title<｜/ref｜><｜box｜>[[71,511,412,534]]<｜/box｜> WARNING: depressurize the line before removing the housing. \n<｜ref｜>text<｜/ref｜><｜box｜>[[71,559,359,580]]<｜/box｜> Do not use if the outer carton is wet, torn, or missing its batch label. \n<｜ref｜>text<｜/ref｜><｜box｜>[[71,609,323,630]]<｜/box｜> Service contact: 0800 555 014 / support@example.invalid \n<｜ref｜>text<｜/ref｜><｜box｜>[[71,762,387,783]]<｜/box｜> Fine print intentionally varies in size; no OCR minimum size is documented.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 560,
+        "output_tokens": 297,
+        "total_tokens": 857
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T08",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.537,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "PRODUCT LABEL\n\n# RIVER-SAFE FILTER CARTRIDGE\n\nModel: RS-14 Batch: 61B Net: 250 ml\n\nStore dry. Keep the seal intact before installation.\n\nReplace after 1,800 cycles or by 01 Mar 2027, whichever comes first.\n\nPacked 18 Nov 2026 / Lot office: North Quay / Code: NQ-61804\n\nWARNING: depressurize the line before removing the housing.\n\nDo not use if the outer carton is wet, torn, or missing its batch label.\n\nService contact: 0800 555 014 / support@example.invalid\n\nFine print intentionally varies in size; no OCR minimum size is documented.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 545,
+        "output_tokens": 152,
+        "total_tokens": 697
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T09",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.688,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>sub_title<｜/ref｜><｜box｜>[[92,323,373,396]]<｜/box｜> # Bridge Pier 12 \n<｜ref｜>text<｜/ref｜><｜box｜>[[92,446,373,490]]<｜/box｜> Inspector: Omar Sen \n<｜ref｜>text<｜/ref｜><｜box｜>[[92,514,348,559]]<｜/box｜> Date: 2026-11-18 \n<｜ref｜>text<｜/ref｜><｜box｜>[[100,583,348,629]]<｜/box｜> Crack width: 0.8 mm \n<｜ref｜>text<｜/ref｜><｜box｜>[[100,652,348,698]]<｜/box｜> Action: recheck in 30 days \n<｜ref｜>text<｜/ref｜><｜box｜>[[100,815,287,843]]<｜/box｜> Tag ID: PI-12-086",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 404,
+        "output_tokens": 133,
+        "total_tokens": 537
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T09",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.646,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "INSPECTION TAG\n\n# Bridge Pier 12\n\nInspector: Omar Sen\n\nDate: 2026-11-18\n\nCrack width: 0.8 mm\n\nAction: recheck in 30 days\n\nTag ID: PI-12-086",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 389,
+        "output_tokens": 55,
+        "total_tokens": 444
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T10",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.487,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>sub_title<｜/ref｜><｜box｜>[[69,219,526,267]]<｜/box｜> Pump room B • inspection log \n<｜ref｜>text<｜/ref｜><｜box｜>[[69,330,277,366]]<｜/box｜> Pressure: 2.40 bar \n<｜ref｜>text<｜/ref｜><｜box｜>[[69,407,295,442]]<｜/box｜> Valve status: closed \n<｜ref｜>text<｜/ref｜><｜box｜>[[69,484,266,520]]<｜/box｜> Operator: Ira Das \n<｜ref｜>text<｜/ref｜><｜box｜>[[69,559,277,594]]<｜/box｜> Next check: 13:45 \n<｜ref｜>text<｜/ref｜><｜box｜>[[69,811,593,837]]<｜/box｜> Contrast is deliberately reduced; performance is not guaranteed by the docs.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 404,
+        "output_tokens": 132,
+        "total_tokens": 536
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T10",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.491,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "FADED FIELD COPY\n\n## Pump room B • inspection log\n\nPressure: 2.40 bar\n\nValve status: closed\n\nOperator: Ira Das\n\nNext check: 13:45\n\nContrast is deliberately reduced; performance is not guaranteed by the docs.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 389,
+        "output_tokens": 56,
+        "total_tokens": 445
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T11",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.46,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>sub_title<｜/ref｜><｜box｜>[[24,68,270,116]]<｜/box｜> FILTER FLOW DIAGRAM \n<｜ref｜>text<｜/ref｜><｜box｜>[[24,125,287,153]]<｜/box｜> Reference labels and relationships for figure-parsing prompts \n<｜ref｜>image<｜/ref｜><｜box｜>[[24,0,999,999]]<｜/box｜>  \n<｜ref｜>text<｜/ref｜><｜box｜>[[28,812,625,847]]<｜/box｜> The diagram shows a left-to-right process: input → filter → output. \n<｜ref｜>text<｜/ref｜><｜box｜>[[28,869,583,895]]<｜/box｜> The API image endpoint is documented for text recognition; figure interpretation is a local-model prompt example.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 468,
+        "output_tokens": 126,
+        "total_tokens": 594
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T11",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.391,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "FILTER FLOW DIAGRAM\n\nReference labels and relationships for figure-parsing prompts\n\nINPUT 06\nraw samples\n\nFILTER 12\nremove debris\n\nOUTPUT 09\nclean stream\n\nThe diagram shows a left-to-right process: input → filter → output.\n\nThe API image endpoint is documented for text recognition; figure interpretation is a local-model prompt example.",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 453,
+        "output_tokens": 76,
+        "total_tokens": 529
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T12",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.282,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>image<｜/ref｜><｜box｜>[[0,0,999,999]]<｜/box｜>",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 380,
+        "output_tokens": 15,
+        "total_tokens": 395
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T13",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.532,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>title<｜/ref｜><｜box｜>[[73,109,291,164]]<｜/box｜> PAGE ONE\n<｜ref｜>text<｜/ref｜><｜box｜>[[70,313,263,357]]<｜/box｜> Record: 7314\n<｜ref｜>text<｜/ref｜><｜box｜>[[70,423,372,467]]<｜/box｜> Station: North Gate 7\n<｜ref｜>text<｜/ref｜><｜box｜>[[70,529,339,573]]<｜/box｜> Reading: 14.25 cm",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 267,
+        "output_tokens": 80,
+        "total_tokens": 347
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T13",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.455,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "PAGE ONE\n\nRecord: 7314\n\nStation: North Gate 7\n\nReading: 14.25 cm",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 252,
+        "output_tokens": 25,
+        "total_tokens": 277
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T14",
+      "purpose": "rich_layout_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.364,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "<｜ref｜>sub_title<｜/ref｜><｜box｜>[[398,286,622,334]]<｜/box｜> FRAME ONE \n<｜ref｜>sub_title<｜/ref｜><｜box｜>[[362,444,639,551]]<｜/box｜> LAMP 14",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 218,
+        "output_tokens": 39,
+        "total_tokens": 257
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T14",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.5,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "## FRAME ONE\n\n## LAMP 14",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 203,
+        "output_tokens": 11,
+        "total_tokens": 214
+      },
+      "error": null
+    },
+    {
+      "fixture_id": "T15",
+      "purpose": "text_recognition",
+      "rep": 1,
+      "status": 200,
+      "ok": true,
+      "elapsed_s": 2.366,
+      "page_count": 1,
+      "pages": [
+        {
+          "index": 0,
+          "text": "## FORMAT CHECK\n\nActual bytes: PNG\n\nUploaded name: .jpg\n\nToken: SNIFF-615",
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "input_tokens": 233,
+        "output_tokens": 25,
+        "total_tokens": 258
+      },
+      "error": null
+    }
+  ]
+}
