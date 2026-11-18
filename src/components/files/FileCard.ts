@@ -8,6 +8,7 @@ import { icons } from '../base/icons.js';
 export type FileCardActions = {
   onRemove: (id: string) => void;
   onRetry: (id: string) => void;
+  onRotate: (id: string) => void;
   onAdd: () => void;
 };
 
@@ -103,8 +104,7 @@ export function renderAttachments(actions: FileCardActions): void {
       rotate.innerHTML = icons.rotate;
       rotate.addEventListener('click', (event) => {
         event.stopPropagation();
-        item.rotation = (item.rotation + 90) % 360;
-        renderAttachments(actions);
+        actions.onRotate(item.id);
       });
       thumb.appendChild(rotate);
     }

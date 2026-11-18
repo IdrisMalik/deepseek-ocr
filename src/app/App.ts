@@ -17,6 +17,7 @@ import { clientConfig } from '../utils/config.js';
 import {
   describeStats,
   downloadText,
+  hasTruncatedPages,
   toMarkdownExport,
   toPlainTextExport,
 } from '../utils/format.js';
@@ -26,7 +27,7 @@ import { toast } from '../components/base/Toast.js';
 import { focusAttachment, renderAttachments } from '../components/files/FileCard.js';
 import { renderResult } from '../components/result/ResultPanel.js';
 import { setKeyVisibility } from '../components/settings/keyVisibility.js';
-import { state, successfulItems } from './state.js';
+import { pendingItems, state, successfulItems } from './state.js';
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -66,6 +67,7 @@ const dom = {
   exportTxtButton: el<HTMLButtonElement>('exportTxtButton'),
   exportMdButton: el<HTMLButtonElement>('exportMdButton'),
   textStats: el<HTMLSpanElement>('textStats'),
+  layoutRetryButton: el<HTMLButtonElement>('layoutRetryButton'),
 };
 
 let batchController: AbortController | null = null;
@@ -82,6 +84,7 @@ let intakeQueue: Promise<void> = Promise.resolve();
  */
 let keyGeneration = 0;
 let dragDepth = 0;
+let multiFrameNoticeShown = false;
 
 function selectedPurpose(): OcrPurpose {
   const checked = document.querySelector<HTMLInputElement>('input[name="purpose"]:checked');
@@ -103,7 +106,8 @@ function renderProgress(): void {
   dom.cancelButton.hidden = !state.processing;
   dom.extractButton.disabled = state.processing || intakeBusy || state.items.length === 0;
   dom.extractButton.classList.toggle('busy', state.processing);
-  const label = state.processing ? t('processing') : t('extractText');
+  const allDone = state.items.length > 0 && pendingItems().length === 0;
+  const label = state.processing ? t('processing') : allDone ? t('reextractAll') : t('extractText');
   dom.extractLabel.textContent = label;
   dom.extractButton.setAttribute('aria-label', label);
   dom.extractButton.title = label;
@@ -122,6 +126,7 @@ function renderAll(): void {
   renderAttachments({
     onRemove: removeItem,
     onRetry: (id) => void runOcr([id], true),
+    onRotate: rotateItem,
     onAdd: browse,
   });
   renderProgress();
@@ -170,6 +175,7 @@ async function addFiles(files: File[], generation: number): Promise<void> {
       previewUrl,
       rotation: 0,
       status: 'ready',
+      purpose: null,
       error: null,
       result: null,
       editedText: null,
@@ -177,6 +183,10 @@ async function addFiles(files: File[], generation: number): Promise<void> {
 
     state.items.push(item);
     if (state.activeId === null) state.activeId = item.id;
+    if (!multiFrameNoticeShown && (mimeType === 'image/tiff' || mimeType === 'image/gif')) {
+      multiFrameNoticeShown = true;
+      toast(t('multiFrameNotice'));
+    }
     // Show each accepted file as soon as it is validated.
     renderAll();
   }
@@ -224,6 +234,29 @@ function removeItem(id: string): void {
   } else {
     dom.browseLink.focus();
   }
+}
+
+/** Rotation invalidates any extracted text, because the input has changed. */
+function rotateItem(id: string): void {
+  const item = state.items.find((candidate) => candidate.id === id);
+  if (!item || state.processing) return;
+
+  item.rotation = (item.rotation + 90) % 360;
+  const invalidates = item.result !== null || item.editedText !== null || item.status !== 'ready';
+  if (invalidates) {
+    item.result = null;
+    item.editedText = null;
+    item.purpose = null;
+    item.error = null;
+    item.status = 'ready';
+    forgetImage(item.id);
+    state.combinedEdit = null;
+    if (state.activeId === item.id) {
+      state.activeId = successfulItems()[0]?.id ?? null;
+    }
+    toast(t('rotationReset'));
+  }
+  renderAll();
 }
 
 /** Reset files, results, editor, progress and async processing. */
@@ -283,6 +316,7 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
   state.combinedEdit = null;
   for (const item of targets) {
     item.status = 'ready';
+    item.purpose = null;
     item.error = null;
     item.result = null;
     item.editedText = null;
@@ -299,7 +333,7 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
   try {
     // The queue owns retries: a transient failure releases its slot immediately
     // and re-enters later, so unrelated files keep moving during backoff.
-    const settled = await mapWithRetries(
+    await mapWithRetries(
       targets,
       async (item): Promise<FileOcrResult> => {
         item.status = 'processing';
@@ -327,6 +361,7 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
           const item = targets[index];
           if (outcome.status === 'fulfilled') {
             item.result = outcome.value;
+            item.purpose = purpose;
             item.status = 'done';
             if (state.activeId === null) state.activeId = item.id;
           } else {
@@ -351,24 +386,14 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
     // write stale results into fresh state.
     if (generation !== batchGeneration) return;
 
-    // onTerminal applies outcomes that settle normally. Mark tasks left
-    // unsettled by cancellation and cover any outcome it could not apply.
-    settled.forEach((entry, index) => {
-      const item = targets[index];
-      if (item.status === 'done' || item.status === 'error' || item.status === 'cancelled') return;
-      if (signal.aborted) {
-        item.status = 'cancelled';
-        return;
+    // onTerminal applies every outcome that settles normally. The queue skips
+    // unsettled items when the batch is aborted, so only those still need a
+    // terminal state.
+    if (signal.aborted) {
+      for (const item of targets) {
+        if (item.status === 'ready' || item.status === 'processing') item.status = 'cancelled';
       }
-      if (entry.status === 'fulfilled') {
-        item.result = entry.value;
-        item.status = 'done';
-        if (state.activeId === null) state.activeId = item.id;
-      } else {
-        item.status = 'error';
-        item.error = entry.reason instanceof Error ? entry.reason.message : t('couldNotExtract');
-      }
-    });
+    }
 
     const cancelled = targets.some((item) => item.status === 'cancelled');
     // Every file now has a terminal outcome, including queued items skipped on cancel.
@@ -448,10 +473,37 @@ window.addEventListener('paste', (event) => {
 });
 
 dom.extractButton.addEventListener('click', () => {
-  void runOcr(state.items.map((item) => item.id));
+  // Preserve completed results when adding files; explicit re-extraction uses
+  // all items once every file is already done.
+  const pending = pendingItems();
+  const ids = (pending.length > 0 ? pending : state.items).map((item) => item.id);
+  void runOcr(ids);
 });
 dom.cancelButton.addEventListener('click', cancelProcessing);
 dom.clearButton.addEventListener('click', clearAll);
+dom.layoutRetryButton.addEventListener('click', () => {
+  const truncated =
+    state.activeId === 'all'
+      ? successfulItems()
+          .filter(
+            (item) => item.purpose !== 'rich_layout_recognition' && hasTruncatedPages([item.result])
+          )
+          .map((item) => item.id)
+      : state.items
+          .filter(
+            (item) =>
+              item.id === state.activeId &&
+              item.purpose !== 'rich_layout_recognition' &&
+              item.result &&
+              hasTruncatedPages([item.result])
+          )
+          .map((item) => item.id);
+  if (truncated.length === 0) return;
+  const rich = document.getElementById('modeRich') as HTMLInputElement | null;
+  if (rich) rich.checked = true;
+  toast(t('retryingWithLayout'));
+  void runOcr(truncated, true);
+});
 
 function setKeyPanel(open: boolean, restoreFocus = false): void {
   if (open) setPrivacyPanel(false);

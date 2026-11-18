@@ -1,4 +1,5 @@
 /** OCR error type and response parsing shared by the browser-only client. */
+import { resultToText } from '../../utils/format.js';
 import { parseRetryAfter } from '../../utils/retry.js';
 import type { FileOcrResult, PageResult } from './types.js';
 
@@ -234,8 +235,10 @@ export function parseOcrResponse(body: string): FileOcrResult {
   // Preserve page order even if a provider response arrives out of order.
   pages.sort((a, b) => a.index - b.index);
 
-  if (pages.every((page) => page.text.trim() === '')) {
-    throw new OcrError('No text was found. Try a clearer image or document.', {
+  // Judge emptiness by the cleaned text: markup-only pages (roles, boxes, HTML)
+  // carry no recoverable words even though the raw text is not blank.
+  if (!resultToText({ pages }).trim()) {
+    throw new OcrError('No text was found. Try again, or choose a clearer image or document.', {
       code: 'empty_result',
       retryable: false,
     });

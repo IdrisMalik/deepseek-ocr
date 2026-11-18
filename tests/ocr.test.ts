@@ -88,6 +88,26 @@ test('parseOcrResponse rejects empty, malformed and non-string responses', () =>
   );
   assert.throws(
     () => parseOcrResponse(JSON.stringify({ pages: [{ index: 0, text: '  ' }] })),
+    (e: unknown) =>
+      e instanceof OcrError &&
+      e.code === 'empty_result' &&
+      !e.retryable &&
+      /Try again/.test(e.message)
+  );
+  // A markup-only rich page carries no recoverable text either.
+  assert.throws(
+    () =>
+      parseOcrResponse(
+        JSON.stringify({
+          pages: [
+            {
+              index: 0,
+              text: '<｜ref｜>image<｜/ref｜><｜box｜>[[0,0,999,999]]<｜/box｜>',
+              finish_reason: 'stop',
+            },
+          ],
+        })
+      ),
     (e: unknown) => e instanceof OcrError && e.code === 'empty_result' && !e.retryable
   );
 });

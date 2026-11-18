@@ -16,7 +16,8 @@ export function renderResult(): void {
   const status = el<HTMLSpanElement>('resultStatus');
   const editor = el<HTMLTextAreaElement>('textEditor');
   const stats = el<HTMLSpanElement>('textStats');
-  const truncatedNotice = el<HTMLParagraphElement>('truncatedNotice');
+  const truncatedNotice = el<HTMLElement>('truncatedNotice');
+  const layoutRetry = el<HTMLButtonElement>('layoutRetryButton');
   const revert = el<HTMLButtonElement>('revertButton');
   const done = successfulItems();
 
@@ -27,6 +28,7 @@ export function renderResult(): void {
     editor.dataset.exportTitle = t('ocrOutput');
     stats.textContent = t('emptyStats');
     truncatedNotice.hidden = true;
+    layoutRetry.hidden = true;
     return;
   }
 
@@ -70,20 +72,28 @@ export function renderResult(): void {
   }
 
   const active = state.items.find((i) => i.id === state.activeId) ?? null;
-  status.hidden = false;
-  status.textContent = t('done');
-  status.className = 'status-pill ok';
-
-  const text = currentText();
-  if (editor.value !== text) editor.value = text;
-  stats.textContent = describeStats(text);
   const truncated =
     state.activeId === 'all'
       ? hasTruncatedPages(done.map((item) => item.result))
       : active?.result
         ? hasTruncatedPages([active.result])
         : false;
+  status.hidden = false;
+  const nextStatus = truncated ? t('partial') : t('done');
+  if (status.textContent !== nextStatus) status.textContent = nextStatus;
+  status.className = `status-pill ${truncated ? 'warn' : 'ok'}`;
+
+  const text = currentText();
+  if (editor.value !== text) editor.value = text;
+  stats.textContent = describeStats(text);
   truncatedNotice.hidden = !truncated;
+  const canTryRich =
+    truncated &&
+    (state.activeId === 'all'
+      ? done.some((item) => item.purpose !== 'rich_layout_recognition')
+      : active?.purpose !== 'rich_layout_recognition');
+  layoutRetry.hidden = !canTryRich;
+  layoutRetry.disabled = state.processing;
   revert.hidden =
     state.activeId === 'all' ? state.combinedEdit == null : active?.editedText == null;
 
