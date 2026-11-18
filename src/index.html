@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="application-version" content="0.1.0" />
+    <meta name="application-status" content="public-beta" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta
+      name="description"
+      content="Turn images and documents into editable text with DeepSeek’s official OCR service. Your API key stays in this browser and is sent only to DeepSeek."
+    />
+    <title>DeepSeek OCR</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+            <rect x="4.5" y="3.5" width="15" height="17" rx="2.5" />
+            <path d="M8 8.5h8M8 12h8M8 15.5h5" stroke-linecap="round" />
+          </svg>
+        </span>
+        <span class="brand-name">DeepSeek OCR</span>
+      </div>
+      <div class="topbar-actions">
+        <span id="modeBadge" class="mode-badge" data-testid="mode-badge">No API key</span>
+        <button
+          id="keyButton"
+          class="icon-btn"
+          type="button"
+          aria-label="DeepSeek API key settings"
+          aria-expanded="false"
+          aria-controls="keyPanel"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            aria-hidden="true"
+          >
+            <circle cx="8" cy="15" r="4" />
+            <path d="M11 12l8-8m-3 3l2 2m-4 0l2 2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <button
+          id="privacyButton"
+          class="icon-btn"
+          type="button"
+          aria-label="Privacy and data use"
+          aria-expanded="false"
+          aria-controls="privacyNote"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"
+              stroke-linejoin="round"
+            />
+            <path d="M12 9v4m0 3h.01" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div
+      id="keyPanel"
+      class="settings-panel"
+      role="dialog"
+      aria-labelledby="keyPanelTitle"
+      data-testid="key-panel"
+      hidden
+    >
+      <div class="panel-head">
+        <h2 id="keyPanelTitle">DeepSeek API key</h2>
+        <button
+          id="keyClose"
+          class="panel-close"
+          type="button"
+          aria-label="Close API key settings"
+          data-testid="key-close"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            aria-hidden="true"
+          >
+            <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <label class="sr-only" for="keyInput">DeepSeek API key</label>
+      <div class="key-field">
+        <input
+          id="keyInput"
+          type="password"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Enter API key"
+          data-testid="key-input"
+        />
+        <button
+          id="keyVisibility"
+          class="key-visibility"
+          type="button"
+          aria-label="Show API key"
+          aria-pressed="false"
+          aria-controls="keyInput"
+          title="Show API key"
+          data-testid="key-visibility"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            aria-hidden="true"
+          >
+            <g class="key-eye">
+              <path
+                d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"
+                stroke-linejoin="round"
+              />
+              <circle cx="12" cy="12" r="3" />
+            </g>
+            <g class="key-eye-off">
+              <path d="M3 3l18 18" stroke-linecap="round" />
+              <path
+                d="M10.6 6.1A9.9 9.9 0 0 1 12 6c6 0 9.5 6 9.5 6a16.6 16.6 0 0 1-3.2 3.9M6.2 6.9A16.4 16.4 0 0 0 2.5 12S6 18 12 18c1 0 1.9-.2 2.7-.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke-linecap="round" />
+            </g>
+          </svg>
+        </button>
+      </div>
+      <div class="settings-actions">
+        <button
+          id="keySave"
+          class="primary-pill settings-save"
+          type="button"
+          data-testid="key-save"
+        >
+          Check and save
+        </button>
+        <button
+          id="keyClear"
+          class="ghost-pill settings-remove"
+          type="button"
+          data-testid="key-clear"
+        >
+          Remove
+        </button>
+      </div>
+      <span id="keyStatus" class="settings-status" role="status" data-testid="key-status"></span>
+      <small>Stored in this browser and sent only to DeepSeek.</small>
+    </div>
+
+    <div id="privacyNote" class="privacy-note" role="dialog" aria-labelledby="privacyTitle" hidden>
+      <div class="panel-head">
+        <h2 id="privacyTitle">Privacy</h2>
+        <button
+          id="privacyClose"
+          class="panel-close"
+          type="button"
+          aria-label="Close privacy details"
+          data-testid="privacy-close"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            aria-hidden="true"
+          >
+            <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <p>
+        Files are sent to DeepSeek to extract text, so an internet connection is required. DeepSeek
+        says it does not store these files for reuse or use them in a chat. The original file name
+        is sent with the file.
+      </p>
+      <p>
+        Your API key stays in this browser and is sent only to DeepSeek, never to this site’s
+        servers. Avoid sensitive files and shared devices.
+      </p>
+    </div>
+
+    <main id="main" class="main">
+      <div class="hero">
+        <div class="intro">
+          <h1>Extract text from files</h1>
+          <p>Turn images and documents into editable text.</p>
+        </div>
+
+        <div class="workspace">
+          <section class="composer" id="composer" aria-label="Files">
+            <div id="fileBar" class="file-bar" data-testid="file-bar" hidden>
+              <span id="fileCount">0 files</span>
+              <button
+                id="clearButton"
+                class="text-btn danger-text"
+                type="button"
+                data-testid="clear-button"
+              >
+                Clear all
+              </button>
+            </div>
+
+            <div id="attachments" class="attachments" data-testid="attachments" hidden></div>
+
+            <div id="emptyPrompt" class="empty-prompt" data-testid="empty-prompt">
+              <svg
+                class="empty-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                aria-hidden="true"
+              >
+                <path d="M12 16V4m0 0L8 8m4-4l4 4" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" stroke-linecap="round" />
+              </svg>
+              <span
+                >Drop files here or
+                <button id="browseLink" class="text-link" type="button" aria-label="Browse files">
+                  browse
+                </button></span
+              >
+              <small>Images, PDF, Word, PowerPoint · up to 100 MiB each</small>
+            </div>
+
+            <input
+              id="fileInput"
+              type="file"
+              accept=".png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff,.pdf,.doc,.docx,.ppt,.pptx"
+              multiple
+              hidden
+            />
+
+            <div
+              id="progressWrap"
+              class="progress-wrap"
+              data-testid="progress-wrap"
+              hidden
+              aria-live="polite"
+            >
+              <div class="progress-meta">
+                <span id="progressLabel">Extracting text…</span>
+                <span id="progressCount"></span>
+              </div>
+              <div
+                id="progressBar"
+                class="progress-track"
+                role="progressbar"
+                aria-label="Text extraction progress"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                <div id="progressFill" class="progress-fill"></div>
+              </div>
+            </div>
+
+            <p
+              id="composerError"
+              class="composer-error"
+              data-testid="composer-error"
+              role="alert"
+              hidden
+            ></p>
+
+            <div class="composer-footer">
+              <div class="mode-control">
+                <div
+                  class="mode-chips"
+                  role="radiogroup"
+                  aria-label="Extraction mode"
+                  data-testid="mode-chips"
+                >
+                  <input
+                    type="radio"
+                    name="purpose"
+                    id="modeStandard"
+                    value="text_recognition"
+                    class="mode-input"
+                    checked
+                    aria-label="Standard text"
+                    data-testid="purpose-standard"
+                  />
+                  <label for="modeStandard" class="mode-chip" title="Simple text in reading order">
+                    <svg
+                      class="mode-chip-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      aria-hidden="true"
+                    >
+                      <path d="M4 6h16M4 12h16M4 18h10" stroke-linecap="round" />
+                    </svg>
+                    <span class="seg-label-full">Standard text</span>
+                    <span class="seg-label-short" aria-hidden="true">Text</span>
+                  </label>
+                  <input
+                    type="radio"
+                    name="purpose"
+                    id="modeRich"
+                    value="rich_layout_recognition"
+                    class="mode-input"
+                    aria-label="Rich layout"
+                    data-testid="purpose-rich"
+                  />
+                  <label
+                    for="modeRich"
+                    class="mode-chip"
+                    title="Uses page layout to order the text"
+                  >
+                    <svg
+                      class="mode-chip-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      aria-hidden="true"
+                    >
+                      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+                      <path d="M10 4.5v15M10 9h10.5" />
+                    </svg>
+                    <span class="seg-label-full">Rich layout</span>
+                    <span class="seg-label-short" aria-hidden="true">Layout</span>
+                  </label>
+                </div>
+              </div>
+              <div class="composer-actions">
+                <button
+                  id="cancelButton"
+                  class="ghost-pill danger-pill"
+                  type="button"
+                  data-testid="cancel-button"
+                  hidden
+                >
+                  Cancel
+                </button>
+                <button
+                  id="extractButton"
+                  class="primary-pill"
+                  type="button"
+                  aria-label="Extract text"
+                  title="Extract text"
+                  data-testid="extract-button"
+                  disabled
+                >
+                  <span id="extractLabel">Extract text</span>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M5 12h14m-6-6l6 6-6 6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section
+            id="resultPanel"
+            class="result-card"
+            data-testid="result-panel"
+            aria-label="Extracted text"
+            hidden
+          >
+            <div class="result-header">
+              <div class="result-title-row">
+                <h2>Extracted text</h2>
+                <span
+                  id="resultStatus"
+                  class="status-pill"
+                  data-testid="result-status"
+                  hidden
+                ></span>
+              </div>
+              <div id="resultTabs" class="result-tabs" data-testid="result-tabs" hidden></div>
+            </div>
+
+            <label class="sr-only" for="textEditor">Extracted text</label>
+            <textarea
+              id="textEditor"
+              class="text-editor"
+              data-testid="text-editor"
+              spellcheck="false"
+              placeholder="Extracted text will appear here."
+            ></textarea>
+
+            <div class="result-footer">
+              <span id="textStats" class="text-stats" data-testid="text-stats"
+                >0 characters · 0 words · 0 lines</span
+              >
+              <div class="result-actions">
+                <button
+                  id="revertButton"
+                  class="ghost-pill"
+                  type="button"
+                  data-testid="revert-button"
+                  hidden
+                >
+                  Revert
+                </button>
+                <button id="copyButton" class="ghost-pill" type="button" data-testid="copy-button">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    aria-hidden="true"
+                  >
+                    <rect x="8" y="8" width="12" height="12" rx="2" />
+                    <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+                  </svg>
+                  Copy
+                </button>
+                <button
+                  id="exportTxtButton"
+                  class="ghost-pill"
+                  type="button"
+                  data-testid="export-txt"
+                  aria-label="Download as plain text (.txt)"
+                  title="Download as plain text (.txt)"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  .txt
+                </button>
+                <button
+                  id="exportMdButton"
+                  class="ghost-pill"
+                  type="button"
+                  data-testid="export-md"
+                  aria-label="Download as Markdown (.md)"
+                  title="Download as Markdown (.md)"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  .md
+                </button>
+              </div>
+            </div>
+            <p id="truncatedNotice" class="notice" data-testid="truncated-notice" hidden>
+              This page reached the text limit. Some text may be incomplete.
+            </p>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <p class="footer-meta">
+          <span class="footer-status">Public Beta</span>
+          <span class="footer-dot" aria-hidden="true">·</span>
+          <span class="footer-copy">Powered by DeepSeek OCR</span>
+        </p>
+        <span class="footer-divider" aria-hidden="true"></span>
+        <a
+          class="footer-link"
+          href="https://api-docs.deepseek.com/guides/ocr"
+          target="_blank"
+          rel="noopener noreferrer"
+          >OCR guide<span class="sr-only"> (opens in new tab)</span></a
+        >
+      </div>
+    </footer>
+
+    <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

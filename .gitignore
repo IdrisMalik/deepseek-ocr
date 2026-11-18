@@ -1,0 +1,22 @@
+# Dependencies and generated output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local environment and credentials
+.env
+.env.*
+.npmrc
+*.local
+*.local.*
+
+# Editor, OS, and log files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Local archives and recovery bundles
+*.bundle
