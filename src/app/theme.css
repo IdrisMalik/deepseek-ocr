@@ -32,6 +32,8 @@
 
   --error: #c62828;
   --error-soft: #fef0f0;
+  --warning: #8a4f00;
+  --warning-soft: #fff4e5;
 
   --shadow-composer:
     0 4px 12px rgba(0, 0, 0, 0.02), 0 2px 2px rgba(72, 104, 178, 0.01),
@@ -75,6 +77,8 @@
 
     --error: #f87171;
     --error-soft: #3a2022;
+    --warning: #f0bd74;
+    --warning-soft: #3a2d1b;
 
     --shadow-composer: none;
     --shadow-card: none;

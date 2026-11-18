@@ -1,0 +1,9 @@
+model,prompt_from_official_example,fixture,expected_evaluation,scope
+DeepSeek-OCR,"<image>\n<|grounding|>Convert the document to markdown.",T02,Text and layout hierarchy retained in Markdown-like output; compare against reference without requiring exact whitespace,Local model only; documented prompt example
+DeepSeek-OCR-2,"<image>\n<|grounding|>Convert the document to markdown.",T02,Text and layout hierarchy retained in Markdown-like output; compare against reference without requiring exact whitespace,Local model only; documented prompt example
+DeepSeek-OCR,"<image>\n<|grounding|>OCR this image.",T06,Read MORNING MARKET OPEN 07:30 EXIT; compare against reference text,Local model only; documented prompt example
+DeepSeek-OCR,"<image>\nFree OCR.",T01,Recover clean text with no layout markup requirement,Local model only; documented prompt example
+DeepSeek-OCR-2,"<image>\nFree OCR.",T01,Recover clean text with no layout markup requirement,Local model only; documented prompt example
+DeepSeek-OCR,"<image>\nParse the figure.",T11,Identify INPUT 06 flows to FILTER 12 and then OUTPUT 09; qualitative rubric only,Local model only; documented prompt example
+DeepSeek-OCR,"<image>\nDescribe this image in detail.",T12,Describe the sun mountain ridge river and trees without inventing text; qualitative rubric only,Local model only; documented prompt example
+DeepSeek-OCR,"<image>\nLocate <|ref|>MORNING<|/ref|> in the image.",T06,Locate the MORNING sign region; record returned coordinate/location format,Local model only; documented prompt example

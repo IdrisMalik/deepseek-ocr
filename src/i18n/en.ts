@@ -7,18 +7,22 @@ export const en = {
   addMoreFiles: 'Add more files',
   rotate: 'Rotate 90°',
   rotateLabel: 'Rotate {name} 90 degrees',
+  rotationReset: 'Rotation changed. Extract text again to refresh this result.',
   removeLabel: 'Remove {name}',
   failed: 'Could not extract',
   retry: 'Retry',
   retryLabel: 'Retry {name}',
   cancelled: 'Cancelled',
   textExtracted: 'Text extracted',
+  multiFrameNotice:
+    'TIFF and GIF are processed as a single image; extra pages or animation frames may be omitted.',
   processingAria: 'Extracting text',
   fileOne: '1 file',
   fileMany: '{count} files',
 
   // Batch lifecycle
   extractText: 'Extract text',
+  reextractAll: 'Re-extract all',
   maxFiles: 'You can add up to {count} files.',
   couldNotVerify: 'Could not check “{name}”. Choose another file.',
   processing: 'Extracting…',
@@ -60,6 +64,8 @@ export const en = {
 
   // Results
   allFiles: 'All files',
+  partial: 'Partial',
+  retryingWithLayout: 'Retrying with Rich layout…',
   copied: 'Copied.',
   copyFailed: 'Could not copy. Select the text and copy it manually.',
   emptyStats: '0 characters · 0 words · 0 lines',

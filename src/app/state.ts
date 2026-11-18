@@ -29,6 +29,11 @@ export function successfulItems(): SuccessfulItem[] {
   return state.items.filter((item): item is SuccessfulItem => item.result !== null);
 }
 
+/** Files that still need extraction; completed results are kept on re-entry. */
+export function pendingItems(): FileItem[] {
+  return state.items.filter((item) => item.status !== 'done');
+}
+
 function itemText(item: FileItem): string {
   if (item.editedText !== null) return item.editedText;
   if (!item.result) return '';

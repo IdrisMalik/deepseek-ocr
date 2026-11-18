@@ -1,0 +1,193 @@
+{
+  "snapshot_date": "2026-11-18",
+  "fixture_count": 29,
+  "image_count": 20,
+  "document_count": 9,
+  "ground_truth_fixture_count": 29,
+  "ground_truth_schema": "2.0",
+  "coverage_rows": 43,
+  "recording_files": {
+    "corpus_runs.json": 104,
+    "image_runs.json": 28,
+    "native_image_runs.json": 2
+  },
+  "recording_run_count": 134,
+  "fixtures_with_recordings": 29,
+  "fixtures_without_recordings": [],
+  "all_images_decoded": true,
+  "documents_valid": true,
+  "formats_by_fixture": {
+    "T01": "PNG",
+    "T02": "JPEG",
+    "T03": "TIFF",
+    "T04": "BMP",
+    "T05": "WEBP",
+    "T06": "GIF",
+    "T07": "PNG",
+    "T08": "JPEG",
+    "T09": "PNG",
+    "T10": "TIFF",
+    "T11": "PNG",
+    "T12": "PNG",
+    "T13": "TIFF",
+    "T14": "GIF",
+    "T15": "PNG",
+    "T16": "PDF",
+    "T17": "PDF",
+    "T18": "PDF",
+    "T19": "PNG",
+    "T20": "DOCX",
+    "T21": "PPTX",
+    "T22": "DOCX",
+    "T23": "PDF",
+    "T24": "PDF",
+    "T25": "PDF",
+    "T26": "PNG",
+    "T27": "PNG",
+    "T28": "PNG",
+    "T29": "INVALID"
+  },
+  "frames_by_fixture": {
+    "T01": 1,
+    "T02": 1,
+    "T03": 1,
+    "T04": 1,
+    "T05": 1,
+    "T06": 1,
+    "T07": 1,
+    "T08": 1,
+    "T09": 1,
+    "T10": 1,
+    "T11": 1,
+    "T12": 1,
+    "T13": 2,
+    "T14": 3,
+    "T15": 1,
+    "T16": null,
+    "T17": null,
+    "T18": null,
+    "T19": 1,
+    "T20": null,
+    "T21": null,
+    "T22": null,
+    "T23": null,
+    "T24": null,
+    "T25": null,
+    "T26": 1,
+    "T27": 1,
+    "T28": 1,
+    "T29": 0
+  },
+  "dimensions_by_fixture": {
+    "T01": [
+      1280,
+      900
+    ],
+    "T02": [
+      1400,
+      1000
+    ],
+    "T03": [
+      1500,
+      1800
+    ],
+    "T04": [
+      1400,
+      900
+    ],
+    "T05": [
+      1400,
+      980
+    ],
+    "T06": [
+      1280,
+      860
+    ],
+    "T07": [
+      1500,
+      980
+    ],
+    "T08": [
+      1600,
+      1000
+    ],
+    "T09": [
+      1244,
+      896
+    ],
+    "T10": [
+      1280,
+      850
+    ],
+    "T11": [
+      1480,
+      850
+    ],
+    "T12": [
+      1280,
+      800
+    ],
+    "T13": [
+      1000,
+      700
+    ],
+    "T14": [
+      900,
+      600
+    ],
+    "T15": [
+      1000,
+      620
+    ],
+    "T16": null,
+    "T17": null,
+    "T18": null,
+    "T19": [
+      1500,
+      1200
+    ],
+    "T20": null,
+    "T21": null,
+    "T22": null,
+    "T23": null,
+    "T24": null,
+    "T25": null,
+    "T26": [
+      1800,
+      1400
+    ],
+    "T27": [
+      700,
+      1400
+    ],
+    "T28": [
+      1200,
+      800
+    ],
+    "T29": null
+  },
+  "document_page_counts": {
+    "T16": 1,
+    "T17": 1,
+    "T18": 1,
+    "T20": 1,
+    "T21": 1,
+    "T22": 1,
+    "T23": 3,
+    "T24": 1,
+    "T25": 1
+  },
+  "manifest_and_ground_truth_ids_match": true,
+  "coverage_references_resolve": true,
+  "sha256_validation": "passed",
+  "checksum_exclusions": [
+    "SHA256SUMS.txt",
+    "verification.json",
+    "reports/",
+    "recordings/runs/"
+  ],
+  "regeneration_reproducible": "T01-T15 are byte-reproducible from tools/generate_fixtures.py with the bundled fonts on the verified Windows/Python 3.13/Pillow 13.0.0 environment (Pillow is pinned in requirements.txt). T16-T29 are frozen artifacts generated with an environment-dependent ReportLab/Pillow/Office toolchain and Windows system fonts; they are pinned by SHA-256 and their generators are preserved under tools/provenance/.",
+  "recording_provenance_note": "T01-T15 recordings were captured before the 2026-11-18 regeneration of those images. They retain text-level evidence for the same generator content, but byte identity with the current images is not guaranteed. T16-T29 recordings match the packaged bytes.",
+  "reference_data_review": "Ground truth was reviewed against the deterministic fixture generators and the recorded API output. Known provider gaps are recorded per fixture instead of being treated as app defects. Approximate pixel regions were removed because the API documents no box-precision contract.",
+  "api_or_model_inference_run": false
+}

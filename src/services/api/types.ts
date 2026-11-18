@@ -26,6 +26,8 @@ export type FileItem = {
   previewUrl: string;
   rotation: number;
   status: FileStatus;
+  /** Native purpose that produced `result`, or null before extraction. */
+  purpose: OcrPurpose | null;
   error: string | null;
   result: FileOcrResult | null;
   editedText: string | null;

@@ -15,4 +15,6 @@
 *.pptx binary
 *.tif binary
 *.tiff binary
+*.ttf binary
+*.ttc binary
 *.webp binary

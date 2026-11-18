@@ -13,6 +13,9 @@
     "format": "oxfmt --write src tests",
     "format:check": "oxfmt --check src tests",
     "test": "tsx --test tests/*.test.ts",
+    "test:ocr": "npm run test:ocr:validate && npm run test:ocr:eval",
+    "test:ocr:validate": "python tests/ocr-eval/tools/validate.py",
+    "test:ocr:eval": "tsx tests/ocr-eval/tools/eval.ts",
     "preview": "vite preview --host localhost --port 4173"
   },
   "devDependencies": {

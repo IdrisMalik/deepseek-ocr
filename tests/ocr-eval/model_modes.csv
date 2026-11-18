@@ -1,0 +1,7 @@
+model,documented_mode,documented_setting,fixture,recommended_observation,scope
+DeepSeek-OCR,Tiny,base_size=512 image_size=512 crop_mode=false,T03,Record acceptance latency and text/region recall,Local model inference setting from official README/model card
+DeepSeek-OCR,Small,base_size=640 image_size=640 crop_mode=false,T03,Record acceptance latency and text/region recall,Local model inference setting from official README/model card
+DeepSeek-OCR,Base,base_size=1024 image_size=1024 crop_mode=false,T03,Record acceptance latency and text/region recall,Local model inference setting from official README/model card
+DeepSeek-OCR,Large,base_size=1280 image_size=1280 crop_mode=false,T03,Record acceptance latency and text/region recall,Local model inference setting from official README/model card
+DeepSeek-OCR,Gundam dynamic,base_size=1024 image_size=640 crop_mode=true,T03,Record crop-sensitive text completeness and output stability,Local model inference setting from official README/model card
+DeepSeek-OCR-2,Dynamic default,(0-6)×768×768 + 1×1024×1024,T03,Record crop-sensitive text completeness and output stability,Local model mode from official README

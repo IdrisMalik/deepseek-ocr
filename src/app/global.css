@@ -538,6 +538,13 @@ button:disabled {
   height: 60px;
   border-radius: 14px;
 }
+/* Two 28px controls only fit a 60px thumbnail at its outer edges. */
+.attachments.dense .thumb-remove {
+  top: 1px;
+}
+.attachments.dense .thumb-rotate {
+  bottom: 1px;
+}
 .thumb {
   position: relative;
   width: 72px;
@@ -1003,6 +1010,11 @@ button:disabled {
   background: var(--error-soft);
   border-color: transparent;
 }
+.status-pill.warn {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border-color: transparent;
+}
 
 .text-editor {
   display: block;
@@ -1087,14 +1099,36 @@ button:disabled {
   color: var(--error);
 }
 .notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   margin: 10px 0 0;
   font-size: 12px;
-  color: #8a4f00;
+  color: var(--warning);
 }
-@media (prefers-color-scheme: dark) {
-  .notice {
-    color: #f0bd74;
+.notice-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+@media (hover: none) {
+  .notice-action {
+    min-height: 44px;
   }
+}
+.notice-action:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 /* ---------- Footer & toasts ---------- */
@@ -1217,6 +1251,14 @@ button:disabled {
   }
   .thumb-remove {
     opacity: 1;
+  }
+  /* Extend the small overlay controls inward so their tap area is 44px wide
+     without covering more of the preview vertically or overlapping each other. */
+  .thumb-remove::before,
+  .thumb-rotate::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 0 -16px;
   }
   .icon-btn {
     position: relative;
@@ -1603,6 +1645,14 @@ button:disabled {
   }
 }
 
+/* At the narrowest composer widths, a 6px gap keeps four 64px tiles on one
+   row instead of wrapping the add tile onto a second row. */
+@container composer (max-width: 280px) {
+  .attachments {
+    gap: 6px;
+  }
+}
+
 /* Short viewports / landscape phones: compact the welcome and reduce the
    editor's height. */
 @media (max-height: 600px) and (orientation: landscape) {
@@ -1644,6 +1694,40 @@ button:disabled {
     padding-bottom: 10px;
   }
   .footer-inner {
+    padding-top: 8px;
+  }
+}
+
+/* Short landscape result view: place the composer and result side by side so
+   the extracted text and its actions stay above the fold. */
+@media (max-height: 600px) and (orientation: landscape) and (min-width: 520px) and (max-width: 1024px) {
+  .main.has-result .hero {
+    max-width: none;
+    padding: 8px 0 0;
+    gap: 10px;
+  }
+  .main.has-result .workspace {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 10px;
+    align-items: start;
+  }
+  .main.has-result .composer {
+    padding: 8px 10px;
+  }
+  .main.has-result .composer-footer {
+    margin-top: 8px;
+  }
+  .main.has-result .result-card {
+    padding: 8px 12px;
+    margin-bottom: 0;
+  }
+  .main.has-result .text-editor {
+    height: clamp(90px, 30vh, 120px);
+    min-height: 90px;
+    max-height: 30vh;
+  }
+  .main.has-result .result-footer {
+    gap: 6px;
     padding-top: 8px;
   }
 }

@@ -16,6 +16,7 @@ function item(overrides: Partial<FileItem> = {}): FileItem {
     previewUrl: '',
     rotation: 0,
     status: 'ready',
+    purpose: null,
     error: null,
     result: null,
     editedText: null,

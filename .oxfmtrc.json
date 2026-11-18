@@ -5,5 +5,13 @@
   "singleQuote": true,
   "printWidth": 100,
   "sortPackageJson": false,
-  "ignorePatterns": ["dist/**", "node_modules/**", "package-lock.json"]
+  "ignorePatterns": [
+    "dist/**",
+    "node_modules/**",
+    "package-lock.json",
+    "tests/ocr-eval/**/*.json",
+    "tests/ocr-eval/**/*.md",
+    "tests/ocr-eval/*.json",
+    "tests/ocr-eval/*.md"
+  ]
 }
