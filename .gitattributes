@@ -1,0 +1,18 @@
+# Normalize text files to LF so checkouts are reproducible across platforms.
+* text=auto eol=lf
+
+# Keep binary fixtures byte-exact.
+*.bin binary
+*.bmp binary
+*.doc binary
+*.docx binary
+*.gif binary
+*.jpeg binary
+*.jpg binary
+*.pdf binary
+*.png binary
+*.ppt binary
+*.pptx binary
+*.tif binary
+*.tiff binary
+*.webp binary

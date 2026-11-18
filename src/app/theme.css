@@ -1,0 +1,84 @@
+/* Design tokens: system UI type, DeepSeek's calm neutral surfaces and a single
+   blue accent. Light and dark are tuned independently rather than inverted. */
+
+:root {
+  --font:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+    'Open Sans', 'Helvetica Neue', sans-serif;
+  --mono: Menlo, Monaco, Consolas, 'Cascadia Mono', 'Liberation Mono', 'Courier New', monospace;
+
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-soft: #f7f8fa;
+  --surface-raised: #f3f4f6;
+  --surface-hover: rgba(38, 49, 72, 0.06);
+  --surface-active: rgba(38, 49, 72, 0.1);
+
+  --border: rgba(0, 0, 0, 0.1);
+  --border-subtle: rgba(0, 0, 0, 0.065);
+
+  --text: #0f1115;
+  --text-secondary: #4f545a;
+  --text-tertiary: #5f6368;
+  --text-caption: #6b7280;
+
+  --brand: #3964fe;
+  --brand-strong: #2f56d0;
+  --brand-solid: #3964fe;
+  --brand-hover: #2f56d0;
+  --brand-soft: #eef2ff;
+  --brand-border: rgba(57, 100, 254, 0.42);
+  --on-brand: #ffffff;
+
+  --error: #c62828;
+  --error-soft: #fef0f0;
+
+  --shadow-composer:
+    0 4px 12px rgba(0, 0, 0, 0.02), 0 2px 2px rgba(72, 104, 178, 0.01),
+    0 30px 60px rgba(72, 104, 178, 0.03);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.02), 0 4px 14px rgba(72, 104, 178, 0.035);
+  --shadow-panel:
+    0 18px 48px rgba(15, 17, 21, 0.16), 0 2px 8px rgba(15, 17, 21, 0.06),
+    0 0 0 1px var(--border-subtle);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur: 0.18s;
+  --radius-pill: 4096px;
+  --content-width: 840px;
+  --workspace-width: 1180px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151517;
+    --surface: #2c2c2e;
+    --surface-soft: #1b1b1c;
+    --surface-raised: #3a3a3c;
+    --surface-hover: rgba(255, 255, 255, 0.07);
+    --surface-active: rgba(255, 255, 255, 0.12);
+
+    --border: rgba(255, 255, 255, 0.12);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+
+    --text: #f9fafb;
+    --text-secondary: #c3c7ce;
+    --text-tertiary: #adb2b8;
+    --text-caption: #9ba0a8;
+
+    --brand: #679efe;
+    --brand-strong: #679efe;
+    --brand-solid: #3964fe;
+    --brand-hover: #2f56d0;
+    --brand-soft: #283142;
+    --brand-border: rgba(103, 158, 254, 0.5);
+    --on-brand: #ffffff;
+
+    --error: #f87171;
+    --error-soft: #3a2022;
+
+    --shadow-composer: none;
+    --shadow-card: none;
+    --shadow-panel:
+      0 24px 60px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--border-subtle);
+  }
+}
