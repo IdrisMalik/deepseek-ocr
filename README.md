@@ -117,7 +117,7 @@ src/
   i18n/                 User-facing strings and interpolation
   services/             OCR client, file intake, formats, and key storage
   utils/                Config, retry, queue, formatting, and validation helpers
-tests/                  Automated tests and format fixtures
+tests/                  Unit and browser tests, OCR evaluation suite, fixtures
 public/                 Favicon, robots.txt, and .nojekyll
 ```
 
