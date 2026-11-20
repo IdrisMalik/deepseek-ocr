@@ -68,14 +68,17 @@ Results are not persisted. The production bundle has no runtime npm dependencies
 | `npm run format`       | Format source and tests           |
 | `npm run format:check` | Check source and test formatting  |
 | `npm test`             | Run automated tests               |
+| `npm run test:browser` | Build and run browser smoke tests |
 | `npm run test:ocr`     | Validate and run the OCR evaluation suite |
 | `npm run preview`      | Preview the static build          |
 
 ### Testing
 
-The Node test suite covers the request queue, retry policy, response parsing and invariants, file validation, text cleanup, export helpers, upload preparation, key visibility, and release metadata/config. Run it with `npm test`.
+The Node test suite covers the request queue, retry policy, response parsing and invariants, file validation and upload preparation (including canvas rotation), text cleanup, export helpers, key visibility, and release metadata/config. Run it with `npm test`.
 
-UI behavior, focus restoration, responsive layouts, CSP enforcement, and failure recovery are checked in a browser during release validation.
+Browser smoke tests (`npm run test:browser`) drive the production build in a real Chromium: demo-mode intake, extraction, editing, rotation, result tabs, clearing, live-mode cancellation, and recovery from a fully failed batch. Live-mode cases intercept the OCR endpoint with Playwright route mocking, so nothing is sent to DeepSeek and no key or charges are required. In CI they run against the same `dist/` artifact that is deployed.
+
+Remaining UI details — focus restoration across rebuilds, responsive layouts, and failure paths beyond the smoke flows — are checked in a browser during release validation.
 
 ### OCR evaluation suite
 
@@ -120,7 +123,7 @@ public/                 Favicon, robots.txt, and .nojekyll
 
 ## Deployment
 
-`.github/workflows/pages.yml` runs formatting checks, type checks, linting, tests, the production build, and a production-dependency audit on pushes and pull requests. Deployment to GitHub Pages runs only for pushes to `main` or a manual dispatch. Actions are pinned to commit SHAs, and Dependabot keeps npm and Action updates visible.
+`.github/workflows/pages.yml` runs formatting checks, type checks, linting, tests, the production build, browser smoke tests, and a production-dependency audit on pushes and pull requests. Deployment to GitHub Pages runs only for pushes to `main` or a manual dispatch. Actions are pinned to commit SHAs, and Dependabot keeps npm and Action updates visible.
 
 `vite.config.ts` uses `base: './'`, keeps `public/` and `dist/` at the repository root while the entry document lives in `src/`, and injects the production CSP meta tag. No repository secrets are required.
 

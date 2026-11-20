@@ -46,6 +46,13 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
+  preview: {
+    host: 'localhost',
+    port: 4173,
+    // The browser test webServer polls this exact port; fail loudly instead
+    // of silently moving when it is taken.
+    strictPort: true,
+  },
   build: {
     outDir: resolve(rootDir, 'dist'),
     emptyOutDir: true,

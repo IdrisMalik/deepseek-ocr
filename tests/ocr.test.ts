@@ -148,6 +148,21 @@ test('parseOcrResponse rejects inconsistent page counts and indexes', () => {
       ),
     (e: unknown) => e instanceof OcrError && e.code === 'bad_response'
   );
+  // Indexes must be integers below the page count and unique, so a gap in the
+  // numbering is impossible by construction: n distinct values in [0, n) are
+  // exactly {0 .. n-1}. This documents that invariant.
+  assert.throws(
+    () =>
+      parseOcrResponse(
+        JSON.stringify({
+          pages: [
+            { index: 0, text: 'One', finish_reason: 'stop' },
+            { index: 2, text: 'Gap', finish_reason: 'stop' },
+          ],
+        })
+      ),
+    (e: unknown) => e instanceof OcrError && e.code === 'bad_response'
+  );
 });
 
 test('parseOcrResponse sorts out-of-order pages into page order', () => {
