@@ -226,8 +226,44 @@ test('content validation reads leading bytes against the declared MIME type', as
   await assert.rejects(() => validateFileContent(fake, 'image/png'), /not a valid PNG file/);
 });
 
-test('item ids are unique within a burst of intake', () => {
-  const ids = new Set<string>();
-  for (let i = 0; i < 1000; i += 1) ids.add(createItemId());
-  assert.equal(ids.size, 1000);
+test('item ids distinguish same-tick files through the random suffix', () => {
+  resetStubs();
+  const originalRandom = Math.random;
+  const originalNow = Date.now;
+  try {
+    // Frozen clock: distinct ids must come from the random suffix alone. The
+    // draws are chosen so their base-36 expansions yield distinct suffixes
+    // ("4fzzzx" and "zk0000" in Node, verified for the supported runtimes).
+    Date.now = () => 1_700_000_000_000;
+    const draws = [0.123456789, 0.987654321];
+    Math.random = (): number => draws.shift() ?? 0;
+    const first = createItemId();
+    const second = createItemId();
+    assert.notEqual(first, second);
+    assert.match(first, /^img-[a-z0-9]+-[a-z0-9]{6}$/);
+    assert.match(second, /^img-[a-z0-9]+-[a-z0-9]{6}$/);
+  } finally {
+    Math.random = originalRandom;
+    Date.now = originalNow;
+  }
+});
+
+test('item ids distinguish a burst even when every random draw is identical', () => {
+  resetStubs();
+  const originalRandom = Math.random;
+  const originalNow = Date.now;
+  try {
+    // Worst case for collisions: no entropy from randomness at all, so
+    // distinctness must come from the time component. Deterministic, unlike
+    // asserting absolute uniqueness from uncontrolled random samples.
+    let tick = 0;
+    Date.now = (): number => 1_700_000_000_000 + (tick += 1);
+    Math.random = (): number => 0.123456789;
+    const ids = new Set<string>();
+    for (let i = 0; i < 1_000; i += 1) ids.add(createItemId());
+    assert.equal(ids.size, 1_000);
+  } finally {
+    Math.random = originalRandom;
+    Date.now = originalNow;
+  }
 });
