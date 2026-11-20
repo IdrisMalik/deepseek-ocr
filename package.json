@@ -13,12 +13,14 @@
     "format": "oxfmt --write src tests",
     "format:check": "oxfmt --check src tests",
     "test": "tsx --test tests/*.test.ts",
+    "test:browser": "npm run build && playwright test",
     "test:ocr": "npm run test:ocr:validate && npm run test:ocr:eval",
     "test:ocr:validate": "python tests/ocr-eval/tools/validate.py",
     "test:ocr:eval": "tsx tests/ocr-eval/tools/eval.ts",
     "preview": "vite preview --host localhost --port 4173"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@types/node": "^22.10.2",
     "oxfmt": "^0.79.0",
     "oxlint": "^1.63.0",

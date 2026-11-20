@@ -18,6 +18,10 @@ coverage/
 Thumbs.db
 *.log
 
+# Playwright browser test artifacts
+test-results/
+playwright-report/
+
 # Local archives and recovery bundles
 *.bundle
 
