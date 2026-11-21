@@ -1,6 +1,6 @@
 # Official model specifications consulted
 
-Snapshot: 18 November 2026. These are specifications for the official open-source model releases, not for the hosted OCR API. The API documentation does not identify its backend model or promise parity with either release.
+Documentation snapshot: 2026-11-18. These are specifications for the official open-source model releases, not for the hosted OCR API. The API documentation does not identify its backend model or promise parity with either release.
 
 | Model | Published input modes | Published prompts relevant to this suite | Other model-card details |
 |---|---|---|---|

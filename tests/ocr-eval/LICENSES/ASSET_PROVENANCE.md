@@ -14,7 +14,7 @@ T01-T15 were regenerated during the 2026-11-18 suite rework. The recordings for 
 
 T16-T18 and T23-T25 are PDFs generated with ReportLab. T20 and T22 are DOCX files generated with python-docx; T22 embeds a Pillow-drawn chart. T21 is a PPTX generated with python-pptx. They use ReportLab or Office libraries and, for some fixtures, Windows system fonts. Regeneration is not byte-identical. The exact files are pinned by SHA-256 and their generators are preserved under `tools/provenance/` for provenance.
 
-The generators in `tools/provenance/` retain the absolute temporary output path used during the original 2026-11-18 evaluation. They are archival provenance, not a one-command rebuild of the frozen files.
+The generators in `tools/provenance/` write beside themselves. They document how the frozen files were produced, not a one-command rebuild, and regeneration is not byte-identical.
 
 ## Recordings
 

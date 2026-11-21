@@ -33,6 +33,8 @@ not yet been assigned a release version.
   multi-frame TIFF/GIF limitations.
 - Improve dense thumbnail controls and the short-landscape result layout.
 - Pin the GitHub Actions runner image and expand CI coverage.
+- Modernize README, security, versioning, and OCR evaluation documentation; align commands and
+  validation scope with the implementation.
 
 ## [0.1.0] - 2026-11-18
 

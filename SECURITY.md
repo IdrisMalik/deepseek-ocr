@@ -1,8 +1,8 @@
-# Security Policy
+# Security policy
 
 ## Supported versions
 
-Security fixes are applied to the current `0.1.x` line (Public Beta).
+Security fixes are applied to the latest published release line (`0.1.x`). Unreleased changes on the default branch are not a supported release until a version is published. See [VERSIONING.md](VERSIONING.md) for the current compatibility phase and release policy.
 
 ## Reporting a vulnerability
 
@@ -12,7 +12,7 @@ Include the affected version or commit, reproduction steps, impact, and any rele
 
 ## Security model
 
-DeepSeek OCR Studio is a static, browser-only client. There is no application backend, no server-side storage, and no runtime npm dependency in the production bundle.
+DeepSeek OCR Studio is a static, browser-only application. There is no application backend, no server-side storage, and no runtime npm dependency in the production bundle.
 
 - **API key.** The key is verified with `GET https://api.deepseek.com/models`, then stored in the current browser's `localStorage`. It is sent only to DeepSeek as a Bearer token. It is never included in the build or sent to this site's hosting provider.
 - **Production CSP.** The production build injects a Content-Security-Policy meta tag that restricts scripts and styles to the site origin, images to same-origin and `blob:` URLs, and network requests to the site origin and `https://api.deepseek.com`. GitHub Pages cannot set response headers, so the policy is delivered as a meta tag.
@@ -26,7 +26,7 @@ DeepSeek OCR Studio is a static, browser-only client. There is no application ba
 - The app cannot enforce per-account concurrency across other clients using the same key. DeepSeek remains the authority for rate limits and billing.
 - Network failures, HTTP 504, client-side timeouts, and recognition timeouts are not retried automatically because the provider may already be processing the file. The user can retry manually.
 - The OCR endpoint's CORS behavior is an implementation detail. `Retry-After` is used only when the browser exposes it.
-- Live OCR quality, multilingual accuracy, and large-document performance are not established by the repository's unit tests.
+- Live OCR quality, multilingual accuracy, and large-document performance are not established by the automated suites. The OCR evaluation suite records provider behavior on synthetic fixtures only.
 - Development-only advisories may remain in build tooling when no patched release exists. They do not ship in the browser bundle; see the audit output before each release.
 
 ## Dependency policy

@@ -1,6 +1,6 @@
 # Recorded API evidence (2026-11-18)
 
-These files preserve authorized DeepSeek OCR API responses used as reference evidence. They are not a fresh benchmark and contain no credentials.
+These files preserve authorized DeepSeek OCR API responses as historical reference evidence. They are not a current benchmark and contain no credentials.
 
 | File | Runs | Fixture coverage | Repetitions |
 |---|---:|---|---|
@@ -12,7 +12,7 @@ The T01-T15 recordings predate the 2026-11-18 regeneration of those image bytes.
 
 ## Source
 
-The runs came from two authorized evaluations on 18 November 2026:
+The runs came from two authorized evaluations on 2026-11-18:
 
 - The image fixture run covered T01-T15.
 - The corpus run covered the adopted PDF, DOCX, and PPTX cases, plus the dense, rotated, blank, and corrupt images. Four redundant corpus cases and the standalone chart image were excluded from this suite.

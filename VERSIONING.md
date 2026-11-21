@@ -8,9 +8,10 @@ MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]
 ```
 
 A release tag adds a conventional `v` prefix (`v0.1.0`). The prefix is not part of the
-SemVer version.
+SemVer version. A published tag identifies an immutable release; corrections use a new
+version instead of replacing the tag.
 
-## Current release
+## Current published release
 
 - **Version:** `0.1.0`
 - **Status:** Public Beta
@@ -19,6 +20,10 @@ SemVer version.
 `Public Beta` is a product-maturity label. It is reported separately through the
 `application-status` metadata and the README. It is not a SemVer prerelease identifier.
 Prereleases are identified in the version itself, for example `0.2.0-beta.1`.
+
+The repository may contain changes merged after the `v0.1.0` tag. They are tracked under
+`[Unreleased]` in the changelog and do not change the published version until the release
+checklist is complete and the release is approved.
 
 While the major version is `0`, the public contract is not yet stable. The minor component is
 the compatibility boundary: a backward-incompatible contract change increments `MINOR` and

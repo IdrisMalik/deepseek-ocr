@@ -1,8 +1,6 @@
 # OCR evaluation suite
 
-**Snapshot date:** 18 November 2026. This suite contains 29 frozen fixtures (20 images and 9 documents), page-level ground truth, authorized API recordings, an offline evaluator, and a validator. It evaluates both `text_recognition` (Standard) and `rich_layout_recognition` (Rich layout) through the same response parser used by DeepSeek OCR Studio.
-
-Located at `tests/ocr-eval/`.
+**Fixture snapshot:** 2026-11-18. The suite contains 29 frozen fixtures (20 images and 9 documents), page-level ground truth, 134 authorized API recordings, an offline evaluator, and a validator. It evaluates both `text_recognition` (Standard) and `rich_layout_recognition` (Rich layout) through the same response parser used by DeepSeek OCR Studio.
 
 ## What this suite answers
 
@@ -12,7 +10,7 @@ Located at `tests/ocr-eval/`.
 - Does the app handle empty results, provider error envelopes, and `finish_reason=length` deterministically, even when the provider is variable?
 - Which observed gaps are provider behavior, and which would be app defects?
 
-It does **not** claim production OCR accuracy. The fixtures are synthetic or purpose-built, and the recordings are evidence from one authorized session, not a human-labeled real-world benchmark.
+It does **not** claim production OCR accuracy. The fixtures are synthetic or purpose-built, and the recordings are evidence from authorized evaluation sessions, not a human-labeled real-world benchmark.
 
 ## Contents
 
@@ -22,7 +20,7 @@ documents/                   9 document fixtures (T16-T18, T20-T25)
 ground_truth/ground_truth.json
                              Page-level references, expectation classes, and known gaps
 recordings/live-2026-11-18/  134 authorized response recordings
-recordings/runs/             New live runs (created on demand; excluded from hashes)
+recordings/runs/             New live runs (created on demand; ignored by Git)
 reports/offline_baseline.json
                              Parser and metric baseline for repeatable offline comparison
 tools/eval.ts                Offline invariants, metrics, baseline, and gated live runner
@@ -35,7 +33,7 @@ coverage.csv                 API, app-workflow, model, and documentation-gap cov
 
 T01-T15 are byte-reproducible on the verified Windows/Python 3.13/Pillow 13.0.0 environment from the bundled fonts; the version is pinned in `requirements.txt`. Running `tools/generate_fixtures.py` replaces only T01-T15 and leaves the frozen T16-T29 files untouched. T16-T29 are frozen: their generators depend on ReportLab, Office libraries, Pillow, and Windows system fonts, and T29 is deliberately corrupt, so the exact bytes rather than the generators are pinned by SHA-256.
 
-Five redundant corpus cases were not adopted: `01_simple_text.png` duplicates T01/T16, `03_two_column.png` duplicates T03/T17, `10_rotated_12deg.png` duplicates T09, `12_low_contrast.png` duplicates T10, and the standalone `18_chart.png` is already embedded in T22. The original corpus ground truth remains under `tools/provenance/`.
+Five redundant corpus cases were excluded from the adopted suite: `01_simple_text.png` duplicates T01/T16, `03_two_column.png` duplicates T03/T17, `10_rotated_12deg.png` duplicates T09, `12_low_contrast.png` duplicates T10, and the standalone `18_chart.png` is already embedded in T22. The original corpus ground truth remains under `tools/provenance/`.
 
 `manifest.csv` uses `frames` for encoded image frames and `pages` for document pages; a blank value means not applicable. `coverage.csv` maps `API-*`, `APP-*`, `MODEL-*`, and `GAP-*` rows to fixture coverage and recorded outcomes.
 
@@ -54,10 +52,14 @@ npm run test:ocr:validate
 npm run test:ocr:eval
 ```
 
+The offline suite runs on demand; CI covers the unit, build, and browser checks. Run the OCR
+suite before a release that changes parsing, fixtures, or reference data.
+
 Requirements:
 
-- Python 3.10+ with the packages in `requirements.txt`, available as `python`.
-- Node.js 22.12+ with the repository's `tsx` dev dependency installed.
+- Python 3.10 or later, verified with Python 3.13 and the versions pinned in `requirements.txt`,
+  available as `python`.
+- Node.js 22.12 or later with the repository's `tsx` dev dependency installed.
 
 Install the Python checks with:
 
@@ -65,7 +67,8 @@ Install the Python checks with:
 python -m pip install -r tests/ocr-eval/requirements.txt
 ```
 
-Commands that read or write suite-relative paths (the hash snippet below) should be run from `tests/ocr-eval`.
+Run suite-relative commands, including the checksum regeneration snippet below, from
+`tests/ocr-eval/`.
 
 The offline evaluator reads the frozen recordings, rebuilds each API response envelope, calls the app's real `parseOcrResponse` and `cleanOcrText`, and checks:
 
@@ -132,11 +135,13 @@ Expectation classes:
 | `observe` | Provider behavior is undocumented (frame handling, format sniffing); record without a pass/fail threshold. |
 | `error` | A provider error envelope is expected; the client must not report success. |
 
-Approximate pixel regions from the old image-only suite were removed. The API documents normalized `0-1000` box coordinates but no segmentation-precision contract, so storing approximate boxes implied a false reference standard.
+Approximate pixel regions are intentionally omitted. The API documents normalized `0-1000` box
+coordinates but no segmentation-precision contract, so storing approximate boxes would imply a
+false reference standard.
 
 ## Recorded evidence
 
-`recordings/live-2026-11-18/` contains 134 runs from authorized API calls on 18 November 2026:
+`recordings/live-2026-11-18/` contains 134 runs from authorized API calls on 2026-11-18:
 
 | File | Runs | Coverage |
 |---|---:|---|
@@ -197,7 +202,8 @@ Parser invariants are separate from accuracy. A provider may omit text; that is 
 - Coverage references and fixture coverage.
 - SHA-256 for every packaged file except `SHA256SUMS.txt`, `verification.json`, `reports/`, and `recordings/runs/`.
 
-Regenerate hashes after any intentional suite change:
+Regenerate hashes after any intentional suite change. The checksum snippet below uses a POSIX
+shell here-document; on Windows, run it in Git Bash or WSL.
 
 ```sh
 python - <<'PY'
@@ -229,7 +235,9 @@ python tools/validate.py --write-report
 - The suite does not exercise the 100 MiB limit, 1,000-page limit, upload timing, concurrency, password-protected files, or billing behavior.
 - The API's backend model version is undocumented, so provider changes can move accuracy without any app change. Use `--live` before drawing conclusions from a single session.
 - T15 and T29 are API-level fixtures; the app's intake rejects them before upload. They test the API boundary, not the app upload path.
-- The app's browser interactions (rotation invalidation, focus, responsive layout) are covered by unit tests and manual release checks, not by this suite.
+- Rotation and upload preparation are covered by unit tests, and the Playwright smoke suite covers
+  rotation invalidation and primary browser workflows. Focus, responsive layout variants, and
+  deeper failure paths remain manual release checks.
 
 ## Optional local-model checks
 
@@ -244,4 +252,4 @@ python tools/validate.py --write-report
 5. [Official DeepSeek-OCR-2 repository](https://github.com/deepseek-ai/DeepSeek-OCR-2)
 6. [Official DeepSeek-OCR-2 model card](https://huggingface.co/deepseek-ai/DeepSeek-OCR-2)
 
-The API guide and reference were consulted on 18 November 2026. Repositories and model cards can change; recheck them before interpreting future runs.
+The API guide and reference were consulted on 2026-11-18. Repositories and model cards can change; recheck them before interpreting future runs.
