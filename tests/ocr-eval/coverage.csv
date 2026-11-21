@@ -26,7 +26,7 @@ APP-7,src/utils/format.ts,"finish_reason=length is detected and offers a manual 
 APP-8,src/services/files.ts,"PDF, DOCX, and PPTX intake and upload paths",T16-T18|T20-T25,covered,"Document fixtures cover all three families; intake validation is unit-tested separately."
 APP-9,src/app/App.ts,Standard remains the default; Rich is an explicit user choice,T25|T26,covered by docs and manual review,"The suite records both modes; it does not change the app default."
 APP-10,src/utils/validate.ts,"Declared MIME type and leading bytes must agree before upload",T15|T29,not exercised by app,"T15 and T29 are API-level fixtures; the app intake rejects both before upload by design."
-APP-11,src/components/files/FileCard.ts,Rotating a completed image clears its stale result,T27,not automated,"Rotation behavior is a browser interaction; no headless browser test is included."
+APP-11,src/components/files/FileCard.ts,Rotating a completed image clears its stale result,T27,covered by browser tests,"Rotation invalidation is covered by the Playwright suite; upload preparation is unit-tested."
 APP-12,src/app/App.ts,Provider variability is surfaced through per-file errors and manual retry,T17|T21|T26|T28,covered by recordings and unit tests,"Recorded empty 200s and truncation pin the evidence; retry policy is unit-tested."
 APP-13,src/utils/format.ts,Identifiers printed in the source remain in edited text and exports,T04|T24|T25|T26,covered,"ID recall and LIS order metrics plus export unit tests cover identifier preservation."
 MODEL-1,https://github.com/deepseek-ai/DeepSeek-OCR,Document/grounded OCR/Free OCR/figure/describe/locate prompts,T01|T02|T06|T11|T12,covered in optional local matrix,"Local model prompt examples are not API endpoint capabilities."

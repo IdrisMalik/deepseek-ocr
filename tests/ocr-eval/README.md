@@ -236,9 +236,10 @@ python tools/validate.py --write-report
 - The suite does not exercise the 100 MiB limit, 1,000-page limit, upload timing, concurrency, password-protected files, or billing behavior.
 - The API's backend model version is undocumented, so provider changes can move accuracy without any app change. Use `--live` before drawing conclusions from a single session.
 - T15 and T29 are API-level fixtures; the app's intake rejects them before upload. They test the API boundary, not the app upload path.
-- Rotation and upload preparation are covered by unit tests, and the Playwright smoke suite covers
-  rotation invalidation and primary browser workflows. Focus, responsive layout variants, and
-  deeper failure paths remain manual release checks.
+- Rotation and upload preparation are covered by unit tests. The Playwright suite covers rotation
+  invalidation, focus restoration after DOM rebuilds, responsive layout variants, partial-batch
+  recovery, result preservation, and the Rich-layout retry. Real-provider timing, non-mocked CORS
+  behavior, and visual design review remain manual release checks.
 
 ## Optional local-model checks
 

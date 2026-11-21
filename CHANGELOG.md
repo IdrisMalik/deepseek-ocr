@@ -20,7 +20,9 @@ after that tag that have not yet been assigned a release version.
 
 - OCR evaluation suite with fixtures, ground truth, authorized recordings, offline regression
   metrics, and a gated live runner.
-- Browser smoke tests against the production build and canvas-rotation unit coverage.
+- Browser smoke tests against the production build, canvas-rotation unit coverage, and
+  interaction regressions for focus restoration, responsive layouts, partial batch recovery,
+  result preservation, and Rich-layout retry.
 - Evaluation asset provenance and license notices.
 - Semantic Versioning 2.0.0 policy, public compatibility contract, and automated version
   metadata validation.

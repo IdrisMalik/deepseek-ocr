@@ -82,9 +82,9 @@ Commit subjects use a Conventional Commits prefix (`feat`, `fix`, `test`, `docs`
 
 The Node test suite covers the request queue, retry policy, response parsing and invariants, file validation and upload preparation (including canvas rotation), text cleanup, export helpers, key visibility, and version metadata and configuration. Run it with `npm test`.
 
-Browser smoke tests (`npm run test:browser`) drive the production build in a real Chromium: demo-mode intake, extraction, editing, rotation, result tabs, clearing, live-mode cancellation, and recovery from a fully failed batch. Install Chromium once with `npx playwright install chromium` before the first local run. Live-mode cases intercept the OCR endpoint with Playwright route mocking, so nothing is sent to DeepSeek and no key or charges are required. In CI they run against the same `dist/` artifact that is deployed.
+Browser tests (`npm run test:browser`) drive the production build in a real Chromium: demo-mode intake, extraction, editing, rotation, result tabs, clearing, live-mode cancellation, partial-batch recovery, result preservation, the Rich-layout retry, keyboard focus restoration across DOM rebuilds, and responsive single- and dual-pane layouts. Install Chromium once with `npx playwright install chromium` before the first local run. Live-mode cases intercept the OCR endpoint with Playwright route mocking, so nothing is sent to DeepSeek and no key or charges are required. In CI they run against the same `dist/` artifact that is deployed.
 
-The smoke suite covers the primary workflows. Focus restoration across rebuilds, responsive layout variants, and deeper failure paths remain manual release checks.
+The browser suite covers the primary workflows and the interaction regressions above. Real-provider timing, non-mocked CORS behavior, and visual design review remain manual release checks.
 
 ### OCR evaluation suite
 
