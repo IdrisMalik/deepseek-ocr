@@ -5,12 +5,16 @@ import {
   cancelExtraction,
   commitExtraction,
   failExtraction,
-  pendingItems,
   resetForInputChange,
+} from '../src/app/extractionTransitions.js';
+import {
+  pendingItems,
+  restoreApiKey,
   richLayoutRetryItems,
   state,
   successfulItems,
 } from '../src/app/state.js';
+import { clientConfig } from '../src/utils/config.js';
 import type { FileItem, FileOcrResult } from '../src/services/api/types.js';
 
 const result = (text: string, finishReason: 'stop' | 'length' = 'stop'): FileOcrResult => ({
@@ -117,6 +121,36 @@ test('an input change clears the committed extraction', () => {
   assert.equal(file.result, null);
   assert.equal(file.purpose, null);
   assert.equal(file.editedText, null);
+});
+
+test('the persisted key is restored explicitly rather than at module import', () => {
+  const store = new Map<string, string>();
+  const storage = {
+    get length(): number {
+      return store.size;
+    },
+    clear: (): void => store.clear(),
+    getItem: (key: string): string | null => store.get(key) ?? null,
+    key: (index: number): string | null => Array.from(store.keys())[index] ?? null,
+    removeItem: (key: string): void => {
+      store.delete(key);
+    },
+    setItem: (key: string, value: string): void => {
+      store.set(key, value);
+    },
+  } as Storage;
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const previousKey = state.apiKey;
+  Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true });
+  try {
+    store.set(clientConfig.keyStorageName, 'sk-restored');
+    restoreApiKey();
+    assert.equal(state.apiKey, 'sk-restored');
+  } finally {
+    state.apiKey = previousKey;
+    if (original) Object.defineProperty(globalThis, 'localStorage', original);
+    else Reflect.deleteProperty(globalThis, 'localStorage');
+  }
 });
 
 test('committed output stays visible and retryable after a failed attempt', () => {

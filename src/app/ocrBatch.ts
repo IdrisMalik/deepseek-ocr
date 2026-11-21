@@ -1,7 +1,8 @@
 /**
  * Headless OCR batch execution: composes the work queue, upload preparation,
- * and the OCR client. State transitions use the shared helpers in `state.ts`;
- * rendering, translations, and active-result selection stay in the app shell.
+ * and the OCR client. State transitions use the pure helpers in
+ * `extractionTransitions.ts`; rendering, translations, and active-result
+ * selection stay in the app shell.
  */
 import { recognizeFileOnce, type OcrFileInput } from '../services/api/client.js';
 import { isRetryableOcrError, ocrRetryAfterMs } from '../services/api/errors.js';
@@ -9,7 +10,12 @@ import { prepareUpload, type PreparedUpload } from '../services/files.js';
 import type { FileItem, FileOcrResult, OcrPurpose } from '../services/api/types.js';
 import { clientConfig } from '../utils/config.js';
 import { mapWithRetries, type QueueOptions } from '../utils/queue.js';
-import { cancelExtraction, commitExtraction, failExtraction } from './state.js';
+import {
+  beginExtraction,
+  cancelExtraction,
+  commitExtraction,
+  failExtraction,
+} from './extractionTransitions.js';
 
 /** Test-only overrides for production retry limits and delays. */
 export type OcrRetryOverrides = {
@@ -38,7 +44,7 @@ export function createOcrQueueOptions(overrides: OcrRetryOverrides = {}): OcrQue
 }
 
 export type OcrBatchOptions = {
-  /** Items already queued by the caller; committed results are preserved. */
+  /** Items to queue; committed results and edits are preserved until success. */
   items: readonly FileItem[];
   purpose: OcrPurpose;
   apiKey: string;
@@ -53,6 +59,8 @@ export type OcrBatchOptions = {
     signal: AbortSignal
   ) => Promise<FileOcrResult>;
   retry?: OcrRetryOverrides;
+  /** Fires after every target is queued, before the first attempt starts. */
+  onBatchStart?: () => void;
   /** Fires when an item starts processing and when its attempt reaches a terminal state. */
   onItemChange?: (item: FileItem) => void;
   /** Fires once per item after its terminal outcome is applied. */
@@ -66,10 +74,11 @@ export type OcrBatchSummary = {
 };
 
 /**
- * Run one attempt per item, with queue-owned retries. Every normally settled
- * item receives a terminal state before this resolves; on abort, items that
- * never settled are marked cancelled. The caller still owns progress labels,
- * error presentation, and UI state such as the active result.
+ * Queue all items, then run one attempt per item with queue-owned retries.
+ * Every normally settled item receives a terminal state before this resolves;
+ * on abort, items that never settled are marked cancelled. The caller still
+ * owns progress labels, error presentation, and UI state such as the active
+ * result.
  */
 export async function runOcrBatch(options: OcrBatchOptions): Promise<OcrBatchSummary> {
   const {
@@ -81,6 +90,7 @@ export async function runOcrBatch(options: OcrBatchOptions): Promise<OcrBatchSum
     prepare = prepareUpload,
     recognize = recognizeFileOnce,
     retry,
+    onBatchStart,
     onItemChange,
     onProgress,
   } = options;
@@ -88,6 +98,11 @@ export async function runOcrBatch(options: OcrBatchOptions): Promise<OcrBatchSum
   const failures = new Set<FileItem>();
   let done = 0;
   let cancelled = false;
+
+  // Queue every target before the first request so the shell can render the
+  // batch state, focus the cancel control, and initialize progress once.
+  for (const item of items) beginExtraction(item);
+  onBatchStart?.();
 
   await mapWithRetries(
     items,

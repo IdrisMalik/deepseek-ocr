@@ -22,10 +22,10 @@ import { toast } from '../components/base/Toast.js';
 import { focusAttachment, renderAttachments } from '../components/files/FileCard.js';
 import { renderResult } from '../components/result/ResultPanel.js';
 import { setKeyVisibility } from '../components/settings/keyVisibility.js';
+import { resetForInputChange } from './extractionTransitions.js';
 import {
-  beginExtraction,
   pendingItems,
-  resetForInputChange,
+  restoreApiKey,
   richLayoutRetryItems,
   state,
   successfulItems,
@@ -331,12 +331,6 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
   const apiKey = state.apiKey;
 
   dom.composerError.hidden = true;
-  // Keep the committed result and any edit until a replacement succeeds.
-  for (const item of targets) beginExtraction(item);
-  renderAll();
-  if (focusCancel) dom.cancelButton.focus();
-
-  setProgress(0, targets.length, t('processingLabel'));
 
   try {
     const summary = await runOcrBatch({
@@ -345,6 +339,12 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
       apiKey,
       signal,
       formatError: (error) => (error instanceof Error ? error.message : t('couldNotExtract')),
+      onBatchStart: () => {
+        // The module has queued every target; show that state before work starts.
+        renderAll();
+        if (focusCancel) dom.cancelButton.focus();
+        setProgress(0, targets.length, t('processingLabel'));
+      },
       onItemChange: (item) => {
         if (generation !== batchGeneration) return;
         if (item.status === 'done') {
@@ -673,6 +673,7 @@ window.addEventListener('keydown', (event) => {
 
 /** Mount the application into the existing static markup. */
 export function mountApp(): void {
+  restoreApiKey();
   dom.keyInput.value = state.apiKey;
   setKeyMasked();
   updateBadge();

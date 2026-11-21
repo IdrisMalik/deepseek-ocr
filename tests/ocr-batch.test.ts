@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createOcrQueueOptions, runOcrBatch, type OcrBatchOptions } from '../src/app/ocrBatch.js';
-import { beginExtraction } from '../src/app/state.js';
 import { isRetryableOcrError, ocrRetryAfterMs, OcrError } from '../src/services/api/errors.js';
 import { clientConfig } from '../src/utils/config.js';
 import type { FileItem, FileOcrResult } from '../src/services/api/types.js';
@@ -105,6 +104,50 @@ test('runs queued items and commits each successful result as it settles', async
   assert.deepEqual(summary, { cancelled: false, failures: [] });
 });
 
+test('queues every target before the first attempt starts', async () => {
+  const committed = result('committed text');
+  const first = item({
+    id: 'queued-first',
+    name: 'queued-first.png',
+    status: 'done',
+    purpose: 'text_recognition',
+    result: committed,
+    editedText: 'manual edit',
+  });
+  const second = item({
+    id: 'queued-second',
+    name: 'queued-second.png',
+    status: 'error',
+    error: 'old error',
+  });
+  const events: string[] = [];
+
+  const summary = await runOcrBatch(
+    batchOptions([first, second], {
+      onBatchStart: () => {
+        events.push(`start:${first.status}:${second.status}`);
+        events.push(`preserved:${first.result === committed}:${first.editedText}:${second.error}`);
+      },
+      recognize: async () => result('new text'),
+      onItemChange: (candidate) => events.push(`${candidate.id}:${candidate.status}`),
+    })
+  );
+
+  assert.deepEqual(events, [
+    'start:ready:ready',
+    'preserved:true:manual edit:null',
+    'queued-first:processing',
+    'queued-first:done',
+    'queued-second:processing',
+    'queued-second:done',
+  ]);
+  assert.equal(first.result?.pages[0].text, 'new text');
+  assert.equal(first.editedText, null);
+  assert.equal(second.status, 'done');
+  assert.equal(second.error, null);
+  assert.deepEqual(summary.failures, []);
+});
+
 test('a failed item preserves committed output while successes replace theirs', async () => {
   const committed = result('committed text');
   const failed = item({
@@ -115,7 +158,6 @@ test('a failed item preserves committed output while successes replace theirs', 
     result: committed,
     editedText: 'manual edit',
   });
-  beginExtraction(failed);
   const recovered = item({ id: 'recovered', name: 'recovered.png' });
 
   const summary = await runOcrBatch(
@@ -169,7 +211,6 @@ test('aborting cancels queued and in-flight work without committing late results
     purpose: 'text_recognition',
     result: committed,
   });
-  beginExtraction(first);
   const second = item({ id: 'cancel-second', name: 'cancel-second.png' });
   const controller = new AbortController();
   const started = deferred<void>();
@@ -211,6 +252,73 @@ test('aborting cancels queued and in-flight work without committing late results
   assert.deepEqual(summary.failures, []);
 });
 
+test('cancellation keeps settled outcomes and cancels only unsettled work', async () => {
+  const first = item({ id: 'mixed-first', name: 'mixed-first.png' });
+  const secondCommitted = result('second committed text');
+  const second = item({
+    id: 'mixed-second',
+    name: 'mixed-second.png',
+    status: 'done',
+    purpose: 'text_recognition',
+    result: secondCommitted,
+    editedText: 'second edit',
+  });
+  const thirdCommitted = result('third committed text');
+  const third = item({
+    id: 'mixed-third',
+    name: 'mixed-third.png',
+    status: 'done',
+    purpose: 'text_recognition',
+    result: thirdCommitted,
+    editedText: 'third edit',
+  });
+  const controller = new AbortController();
+  const thirdStarted = deferred<void>();
+  const thirdPending = deferred<FileOcrResult>();
+  const twoSettled = deferred<void>();
+  const progress: number[] = [];
+  const calls: string[] = [];
+
+  const run = runOcrBatch(
+    batchOptions([first, second, third], {
+      signal: controller.signal,
+      retry: { concurrency: 2, maxAttempts: 1, baseDelayMs: 1, maxDelayMs: 1, jitterRatio: 0 },
+      recognize: (file) => {
+        calls.push(file.name);
+        if (file.name === 'mixed-first.png') return Promise.resolve(result('first new text'));
+        if (file.name === 'mixed-second.png') {
+          return Promise.reject(new Error('second failed'));
+        }
+        thirdStarted.resolve();
+        return thirdPending.promise;
+      },
+      onProgress: (done) => {
+        progress.push(done);
+        if (done === 2) twoSettled.resolve();
+      },
+    })
+  );
+
+  await Promise.all([twoSettled.promise, thirdStarted.promise]);
+  controller.abort();
+  thirdPending.resolve(result('late third text'));
+  const summary = await run;
+
+  assert.deepEqual([...calls].sort(), ['mixed-first.png', 'mixed-second.png', 'mixed-third.png']);
+  assert.deepEqual(progress, [1, 2]);
+  assert.equal(first.status, 'done');
+  assert.equal(first.result?.pages[0].text, 'first new text');
+  assert.equal(second.status, 'error');
+  assert.equal(second.error, 'second failed');
+  assert.equal(second.result, secondCommitted);
+  assert.equal(second.editedText, 'second edit');
+  assert.equal(third.status, 'cancelled');
+  assert.equal(third.result, thirdCommitted);
+  assert.equal(third.editedText, 'third edit');
+  assert.equal(summary.cancelled, true);
+  assert.deepEqual(summary.failures, [second]);
+});
+
 test('retries a transient provider error before committing the replacement', async () => {
   const target = item({
     id: 'retry-target',
@@ -220,7 +328,6 @@ test('retries a transient provider error before committing the replacement', asy
     result: result('old text'),
     editedText: 'old edit',
   });
-  beginExtraction(target);
   let attempts = 0;
   const changes: string[] = [];
   const progress: number[] = [];
