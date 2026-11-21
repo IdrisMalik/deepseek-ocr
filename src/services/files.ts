@@ -4,7 +4,6 @@ import { extensionForMime, formatForExtension, isSupportedMime, kindForMime } fr
 import { clientConfig } from '../utils/config.js';
 
 export const MAX_FILES = clientConfig.maxFiles;
-export const MAX_FILE_BYTES = clientConfig.maxFileBytes;
 
 /** Resolve MIME using the browser value first, then the file extension. */
 export function resolveMimeType(file: File): string {
@@ -21,7 +20,7 @@ export function validateFile(file: File): string | null {
   if (file.size === 0) {
     return `“${file.name}” is empty. Choose another file.`;
   }
-  if (file.size > MAX_FILE_BYTES) {
+  if (file.size > clientConfig.maxFileBytes) {
     return `“${file.name}” is larger than the 100 MiB limit. Choose a smaller file.`;
   }
   return null;
@@ -74,7 +73,6 @@ export function forgetImage(id: string): void {
 
 export type PreparedUpload = {
   blob: Blob;
-  mimeType: string;
   filename: string;
 };
 
@@ -101,7 +99,7 @@ export async function prepareUpload(item: FileItem): Promise<PreparedUpload> {
 
   let upload: PreparedUpload;
   if (isDocument(item) || item.rotation % 360 === 0) {
-    upload = { blob: item.blob, mimeType: item.mimeType, filename: item.name };
+    upload = { blob: item.blob, filename: item.name };
   } else {
     const image = await loadDecodedImage(item);
     const rotated = item.rotation % 180 !== 0;
@@ -125,7 +123,6 @@ export async function prepareUpload(item: FileItem): Promise<PreparedUpload> {
     const stem = item.name.replace(/\.[^.]+$/, '') || 'ocr-output';
     upload = {
       blob: await canvasToBlob(canvas),
-      mimeType: 'image/png',
       filename: `${stem}.${extensionForMime('image/png')}`,
     };
   }

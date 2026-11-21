@@ -588,8 +588,7 @@ button:disabled {
 }
 
 .thumb-remove,
-.thumb-rotate,
-.thumb-add button {
+.thumb-rotate {
   position: absolute;
   z-index: 2;
   display: grid;
@@ -697,9 +696,6 @@ button:disabled {
   font-size: 10px;
   font-weight: 600;
   padding: 2px 7px;
-}
-.thumb-overlay.cancelled {
-  background: rgba(0, 0, 0, 0.7);
 }
 .thumb-overlay .cancel-text {
   font-size: 10px;
@@ -1003,11 +999,6 @@ button:disabled {
 .status-pill.ok {
   color: var(--brand-strong);
   background: var(--brand-soft);
-  border-color: transparent;
-}
-.status-pill.bad {
-  color: var(--error);
-  background: var(--error-soft);
   border-color: transparent;
 }
 .status-pill.warn {

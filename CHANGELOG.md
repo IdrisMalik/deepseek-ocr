@@ -31,6 +31,8 @@ after that tag that have not yet been assigned a release version.
 
 - Preserve completed results, invalidate rotated extractions, and offer a manual Rich layout
   retry for truncated Standard output.
+- Remove redundant accept-list generation, unused upload metadata, and dead result and
+  thumbnail style hooks.
 - Normalize rich-layout markup and HTML tables, handle private-use DOCX bullets, and surface
   multi-frame TIFF/GIF limitations.
 - Improve dense thumbnail controls and the short-landscape result layout.
@@ -40,6 +42,8 @@ after that tag that have not yet been assigned a release version.
 
 ### Fixed
 
+- Show the Rich layout retry only when an active Standard result is truncated, avoiding a no-op
+  action in mixed-mode batches.
 - Align the Ctrl/Cmd+Enter shortcut with pending-file extraction so completed results and edits
   are preserved, and ignore it while a settings panel or editable field has focus.
 - Correct the DOCX private-use bullet reference to `U+F0B7`, clarify that DOC and PPT lack

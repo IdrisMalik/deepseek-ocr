@@ -139,7 +139,7 @@ test('a rotated image is re-encoded as PNG with swapped dimensions', async () =>
   const item = imageItem({ id: 'rot-90', rotation: 90, name: 'photo.jpeg' });
   const upload = await prepareUpload(item);
 
-  assert.equal(upload.mimeType, 'image/png');
+  assert.equal(upload.blob.type, 'image/png');
   assert.equal(upload.filename, 'photo.png');
   assert.equal(await upload.blob.text(), 'rotated-as-png');
   assert.equal(lastToBlobType, 'image/png');
@@ -164,7 +164,7 @@ test('a full-turn image is uploaded as its original blob', async () => {
   const upload = await prepareUpload(item);
 
   assert.equal(upload.blob, item.blob);
-  assert.equal(upload.mimeType, 'image/png');
+  assert.equal(upload.blob.type, 'image/png');
   assert.equal(upload.filename, 'scan.png');
   assert.equal(canvasCount, 0, 'no canvas is created when nothing is rotated');
 });

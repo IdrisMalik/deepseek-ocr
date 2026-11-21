@@ -16,10 +16,6 @@ export function parseRetryAfter(
   return undefined;
 }
 
-export function abortError(): DOMException {
-  return new DOMException('Aborted', 'AbortError');
-}
-
 export type RetryDelayOptions = {
   baseDelayMs?: number;
   maxDelayMs?: number;

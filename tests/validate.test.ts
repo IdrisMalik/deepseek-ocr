@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { verifyFileContent } from '../src/utils/validate.js';
-import { acceptAttribute, kindForMime, SUPPORTED_FORMATS } from '../src/services/formats.js';
+import { kindForMime, SUPPORTED_FORMATS } from '../src/services/formats.js';
 import { resolveMimeType, validateFile } from '../src/services/files.js';
 
 const fixturePath = (name: string): string => join(process.cwd(), 'tests', 'fixtures', name);
@@ -31,20 +31,16 @@ test('TIFF is classified as a document rather than a preview image', () => {
   assert.equal(kindForMime(tiff!.mime), 'document');
 });
 
-test('accept attribute advertises every supported extension', () => {
-  const accept = acceptAttribute();
-  for (const format of SUPPORTED_FORMATS) {
-    assert.ok(accept.includes(`.${format.ext}`));
-    for (const alias of format.aliases ?? []) assert.ok(accept.includes(`.${alias}`));
-  }
-});
-
-test('static file input fallback matches the generated accept list', () => {
+test('static file input advertises every supported extension', () => {
   const html = readFileSync(join(process.cwd(), 'src', 'index.html'), 'utf8');
   const inputTag = /<input[^>]*id="fileInput"[^>]*>/.exec(html)?.[0];
   const accept = /accept="([^"]+)"/.exec(inputTag ?? '')?.[1];
   assert.ok(inputTag, 'fileInput element');
-  assert.equal(accept, acceptAttribute());
+
+  const expected = SUPPORTED_FORMATS.flatMap((format) => [format.ext, ...(format.aliases ?? [])])
+    .map((extension) => `.${extension}`)
+    .join(',');
+  assert.equal(accept, expected);
 });
 
 test('validation rejects unsupported, empty and oversized files', () => {

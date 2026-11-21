@@ -36,7 +36,7 @@ test('documents are uploaded as their original Blob', async () => {
   const prepared = await prepareUpload(input);
   assert.equal(prepared.blob, input.blob);
   assert.equal(prepared.filename, 'sample.pdf');
-  assert.equal(prepared.mimeType, 'application/pdf');
+  assert.equal(prepared.blob.type, 'application/pdf');
 });
 
 test('unrotated images are uploaded without canvas re-encoding', async () => {
@@ -44,7 +44,7 @@ test('unrotated images are uploaded without canvas re-encoding', async () => {
   const prepared = await prepareUpload(input);
   assert.equal(prepared.blob, input.blob);
   assert.equal(prepared.filename, 'scan.png');
-  assert.equal(prepared.mimeType, 'image/png');
+  assert.equal(prepared.blob.type, 'image/png');
 });
 
 test('prepared uploads are cached per file and cleared on removal', async () => {

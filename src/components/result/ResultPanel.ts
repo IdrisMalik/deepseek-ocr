@@ -1,5 +1,5 @@
 /** Extracted-text pane: result tabs, editor, stats and export actions. */
-import { currentText, state, successfulItems } from '../../app/state.js';
+import { currentText, richLayoutRetryItems, state, successfulItems } from '../../app/state.js';
 import { t } from '../../i18n/index.js';
 import { describeStats, hasTruncatedPages, safeFileStem } from '../../utils/format.js';
 
@@ -87,12 +87,7 @@ export function renderResult(): void {
   if (editor.value !== text) editor.value = text;
   stats.textContent = describeStats(text);
   truncatedNotice.hidden = !truncated;
-  const canTryRich =
-    truncated &&
-    (state.activeId === 'all'
-      ? done.some((item) => item.purpose !== 'rich_layout_recognition')
-      : active?.purpose !== 'rich_layout_recognition');
-  layoutRetry.hidden = !canTryRich;
+  layoutRetry.hidden = richLayoutRetryItems().length === 0;
   layoutRetry.disabled = state.processing;
   revert.hidden =
     state.activeId === 'all' ? state.combinedEdit == null : active?.editedText == null;

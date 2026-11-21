@@ -44,7 +44,7 @@ export const SUPPORTED_FORMATS: readonly SupportedFormat[] = [
   },
 ] as const;
 
-const mimeSet = new Set(SUPPORTED_FORMATS.map((f) => f.mime));
+const mimeMap = new Map(SUPPORTED_FORMATS.map((format) => [format.mime, format]));
 const extMap = new Map<string, SupportedFormat>();
 for (const format of SUPPORTED_FORMATS) {
   extMap.set(format.ext, format);
@@ -52,11 +52,11 @@ for (const format of SUPPORTED_FORMATS) {
 }
 
 export function isSupportedMime(mime: string): boolean {
-  return mimeSet.has(mime.toLowerCase());
+  return mimeMap.has(mime.toLowerCase());
 }
 
 export function formatForMime(mime: string): SupportedFormat | undefined {
-  return SUPPORTED_FORMATS.find((f) => f.mime === mime.toLowerCase());
+  return mimeMap.get(mime.toLowerCase());
 }
 
 export function formatForExtension(extension: string): SupportedFormat | undefined {
@@ -69,11 +69,4 @@ export function kindForMime(mime: string): FileKind | undefined {
 
 export function extensionForMime(mime: string): string {
   return formatForMime(mime)?.ext ?? 'bin';
-}
-
-/** The accept attribute value for file inputs. */
-export function acceptAttribute(): string {
-  return SUPPORTED_FORMATS.flatMap((f) => [f.ext, ...(f.aliases ?? [])])
-    .map((ext) => `.${ext}`)
-    .join(',');
 }

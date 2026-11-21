@@ -63,7 +63,6 @@ export function renderAttachments(actions: FileCardActions): void {
     thumb.dataset.name = item.name;
     if (item.status === 'done') thumb.classList.add('done');
     if (item.status === 'error') thumb.classList.add('error');
-    if (item.status === 'cancelled') thumb.classList.add('cancelled');
     thumb.title = `${item.name} · ${formatSize(item.size)}`;
 
     if (isDocument(item)) {
@@ -141,7 +140,7 @@ export function renderAttachments(actions: FileCardActions): void {
       thumb.appendChild(overlay);
     } else if (item.status === 'cancelled') {
       const overlay = document.createElement('div');
-      overlay.className = 'thumb-overlay cancelled';
+      overlay.className = 'thumb-overlay';
       const text = document.createElement('span');
       text.className = 'cancel-text';
       text.textContent = t('cancelled');

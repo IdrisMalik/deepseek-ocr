@@ -10,7 +10,7 @@ import {
   toPlainTextExport,
 } from '../src/utils/format.js';
 import type { FileItem, FileOcrResult } from '../src/services/api/types.js';
-import { combinedText, pendingItems, state } from '../src/app/state.js';
+import { combinedText, pendingItems, richLayoutRetryItems, state } from '../src/app/state.js';
 
 const cleaningCases: Array<[string, string, string]> = [
   [
@@ -168,6 +168,56 @@ test('pendingItems excludes completed results', () => {
     );
   } finally {
     state.items = original;
+  }
+});
+
+test('Rich retry targets only truncated Standard results in the active view', () => {
+  const originalItems = state.items;
+  const originalActive = state.activeId;
+  const make = (
+    id: string,
+    purpose: FileItem['purpose'],
+    finishReason: FileOcrResult['pages'][number]['finishReason']
+  ): FileItem => ({
+    id,
+    name: `${id}.png`,
+    size: 1,
+    mimeType: 'image/png',
+    blob: new Blob(['x']),
+    previewUrl: '',
+    rotation: 0,
+    status: 'done',
+    purpose,
+    error: null,
+    result: { pages: [{ index: 0, text: 'text', finishReason }] },
+    editedText: null,
+  });
+  state.items = [
+    make('rich-truncated', 'rich_layout_recognition', 'length'),
+    make('standard-truncated', 'text_recognition', 'length'),
+    make('standard-complete', 'text_recognition', 'stop'),
+  ];
+  try {
+    state.activeId = 'all';
+    assert.deepEqual(
+      richLayoutRetryItems().map((item) => item.id),
+      ['standard-truncated']
+    );
+
+    state.activeId = 'rich-truncated';
+    assert.deepEqual(richLayoutRetryItems(), []);
+
+    state.activeId = 'standard-truncated';
+    assert.deepEqual(
+      richLayoutRetryItems().map((item) => item.id),
+      ['standard-truncated']
+    );
+
+    state.activeId = 'standard-complete';
+    assert.deepEqual(richLayoutRetryItems(), []);
+  } finally {
+    state.items = originalItems;
+    state.activeId = originalActive;
   }
 });
 

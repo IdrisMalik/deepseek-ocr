@@ -2,7 +2,7 @@
 import { loadKey } from '../services/settings.js';
 import type { FileItem, FileOcrResult } from '../services/api/types.js';
 import { demoMode } from '../utils/config.js';
-import { resultToText } from '../utils/format.js';
+import { hasTruncatedPages, resultToText } from '../utils/format.js';
 
 export type State = {
   items: FileItem[];
@@ -32,6 +32,20 @@ export function successfulItems(): SuccessfulItem[] {
 /** Files that still need extraction; completed results are kept on re-entry. */
 export function pendingItems(): FileItem[] {
   return state.items.filter((item) => item.status !== 'done');
+}
+
+/**
+ * Completed files in the active view whose Standard result was truncated and
+ * can be retried with Rich layout. Rich results are excluded so the retry
+ * action is only offered when it has work to do.
+ */
+export function richLayoutRetryItems(): SuccessfulItem[] {
+  const completed = successfulItems();
+  const visible =
+    state.activeId === 'all' ? completed : completed.filter((item) => item.id === state.activeId);
+  return visible.filter(
+    (item) => item.purpose !== 'rich_layout_recognition' && hasTruncatedPages([item.result])
+  );
 }
 
 function itemText(item: FileItem): string {

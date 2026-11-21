@@ -17,7 +17,6 @@ import { clientConfig } from '../utils/config.js';
 import {
   describeStats,
   downloadText,
-  hasTruncatedPages,
   toMarkdownExport,
   toPlainTextExport,
 } from '../utils/format.js';
@@ -27,7 +26,7 @@ import { toast } from '../components/base/Toast.js';
 import { focusAttachment, renderAttachments } from '../components/files/FileCard.js';
 import { renderResult } from '../components/result/ResultPanel.js';
 import { setKeyVisibility } from '../components/settings/keyVisibility.js';
-import { pendingItems, state, successfulItems } from './state.js';
+import { pendingItems, richLayoutRetryItems, state, successfulItems } from './state.js';
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -61,6 +60,7 @@ const dom = {
   cancelButton: el<HTMLButtonElement>('cancelButton'),
   extractButton: el<HTMLButtonElement>('extractButton'),
   extractLabel: el<HTMLSpanElement>('extractLabel'),
+  modeRich: el<HTMLInputElement>('modeRich'),
   textEditor: el<HTMLTextAreaElement>('textEditor'),
   revertButton: el<HTMLButtonElement>('revertButton'),
   copyButton: el<HTMLButtonElement>('copyButton'),
@@ -87,10 +87,7 @@ let dragDepth = 0;
 let multiFrameNoticeShown = false;
 
 function selectedPurpose(): OcrPurpose {
-  const checked = document.querySelector<HTMLInputElement>('input[name="purpose"]:checked');
-  return checked?.value === 'rich_layout_recognition'
-    ? 'rich_layout_recognition'
-    : 'text_recognition';
+  return dom.modeRich.checked ? 'rich_layout_recognition' : 'text_recognition';
 }
 
 /** Input types that do not accept typed or numeric entry. */
@@ -157,6 +154,20 @@ function renderAll(): void {
 
 function browse(): void {
   dom.fileInput.click();
+}
+
+function disposeItem(item: FileItem): void {
+  if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  forgetImage(item.id);
+}
+
+/** Return a file to its pre-extraction state. */
+function resetExtraction(item: FileItem): void {
+  item.status = 'ready';
+  item.purpose = null;
+  item.error = null;
+  item.result = null;
+  item.editedText = null;
 }
 
 async function addFiles(files: File[], generation: number): Promise<void> {
@@ -235,8 +246,7 @@ function removeItem(id: string): void {
   const index = state.items.findIndex((item) => item.id === id);
   if (index < 0) return;
   const [item] = state.items.splice(index, 1);
-  if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
-  forgetImage(item.id);
+  disposeItem(item);
 
   if (state.activeId === id) {
     const next = successfulItems()[0] ?? state.items[0];
@@ -264,11 +274,7 @@ function rotateItem(id: string): void {
   item.rotation = (item.rotation + 90) % 360;
   const invalidates = item.result !== null || item.editedText !== null || item.status !== 'ready';
   if (invalidates) {
-    item.result = null;
-    item.editedText = null;
-    item.purpose = null;
-    item.error = null;
-    item.status = 'ready';
+    resetExtraction(item);
     forgetImage(item.id);
     state.combinedEdit = null;
     if (state.activeId === item.id) {
@@ -287,10 +293,7 @@ function clearAll(): void {
   batchController = null;
   state.processing = false;
 
-  for (const item of state.items) {
-    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
-    forgetImage(item.id);
-  }
+  for (const item of state.items) disposeItem(item);
   state.items = [];
   state.activeId = null;
   state.combinedEdit = null;
@@ -334,13 +337,7 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
 
   dom.composerError.hidden = true;
   state.combinedEdit = null;
-  for (const item of targets) {
-    item.status = 'ready';
-    item.purpose = null;
-    item.error = null;
-    item.result = null;
-    item.editedText = null;
-  }
+  for (const item of targets) resetExtraction(item);
   if (state.activeId !== 'all' && targets.some((item) => item.id === state.activeId)) {
     state.activeId = null;
   }
@@ -504,27 +501,11 @@ dom.extractButton.addEventListener('click', startExtraction);
 dom.cancelButton.addEventListener('click', cancelProcessing);
 dom.clearButton.addEventListener('click', clearAll);
 dom.layoutRetryButton.addEventListener('click', () => {
-  const truncated =
-    state.activeId === 'all'
-      ? successfulItems()
-          .filter(
-            (item) => item.purpose !== 'rich_layout_recognition' && hasTruncatedPages([item.result])
-          )
-          .map((item) => item.id)
-      : state.items
-          .filter(
-            (item) =>
-              item.id === state.activeId &&
-              item.purpose !== 'rich_layout_recognition' &&
-              item.result &&
-              hasTruncatedPages([item.result])
-          )
-          .map((item) => item.id);
-  if (truncated.length === 0) return;
-  const rich = document.getElementById('modeRich') as HTMLInputElement | null;
-  if (rich) rich.checked = true;
+  const retryIds = richLayoutRetryItems().map((item) => item.id);
+  if (retryIds.length === 0) return;
+  dom.modeRich.checked = true;
   toast(t('retryingWithLayout'));
-  void runOcr(truncated, true);
+  void runOcr(retryIds, true);
 });
 
 function setKeyPanel(open: boolean, restoreFocus = false): void {
@@ -739,7 +720,6 @@ window.addEventListener('keydown', (event) => {
 
 /** Mount the application into the existing static markup. */
 export function mountApp(): void {
-  dom.fileInput.accept = clientConfig.accept;
   dom.keyInput.value = state.apiKey;
   setKeyMasked();
   updateBadge();

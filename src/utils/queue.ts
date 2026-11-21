@@ -6,11 +6,15 @@
  * backoff. Retries are bounded by `maxAttempts`; terminal outcomes are returned
  * in input order and a failure never cancels the rest of the batch.
  */
-import { abortError, retryDelayMs, type RetryDelayOptions } from './retry.js';
+import { retryDelayMs, type RetryDelayOptions } from './retry.js';
 
 export type QueueResult<T> =
   | { status: 'fulfilled'; value: T }
   | { status: 'rejected'; reason: unknown };
+
+function abortError(): DOMException {
+  return new DOMException('Aborted', 'AbortError');
+}
 
 export type QueueOptions<T> = RetryDelayOptions & {
   concurrency: number;

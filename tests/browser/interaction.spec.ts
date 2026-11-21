@@ -281,6 +281,48 @@ test.describe('workflow state', () => {
     expect(purposes).toEqual(['text_recognition', 'rich_layout_recognition']);
   });
 
+  test('Rich retry is hidden when no Standard result is truncated', async ({ page }) => {
+    await seedFakeKey(page);
+    await page.route('**/v1/tools/ocr', async (route) => {
+      const body = route.request().postDataBuffer()?.toString('latin1') ?? '';
+      const rich = body.includes('rich_layout_recognition');
+      const jpg = body.includes('sample.jpg');
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          pages: [
+            {
+              index: 0,
+              text: rich ? 'Rich output reached the limit.' : jpg ? 'JPG text.' : 'PNG text.',
+              finish_reason: rich ? 'length' : 'stop',
+            },
+          ],
+        }),
+      });
+    });
+    await page.goto('/');
+
+    await addFiles(page, ['tests/fixtures/sample.png']);
+    await page.locator('label[for="modeRich"]').click();
+    await expect(page.getByTestId('purpose-rich')).toBeChecked();
+    await page.getByTestId('extract-button').click();
+    await expect(page.getByTestId('truncated-notice')).toBeVisible();
+    await expect(page.getByTestId('layout-retry')).toBeHidden();
+
+    await page.locator('label[for="modeStandard"]').click();
+    await expect(page.getByTestId('purpose-standard')).toBeChecked();
+    await addFiles(page, ['tests/fixtures/sample.jpg'], 2);
+    await page.getByTestId('extract-button').click();
+    await expect(page.locator('.result-tab')).toHaveCount(3);
+    await page
+      .getByTestId('result-tabs')
+      .getByRole('button', { name: 'All files', exact: true })
+      .click();
+    await expect(page.getByTestId('truncated-notice')).toBeVisible();
+    await expect(page.getByTestId('layout-retry')).toBeHidden();
+  });
+
   test('a partially failed batch keeps successful results and retries the failed file', async ({
     page,
   }) => {

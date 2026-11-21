@@ -69,7 +69,7 @@ See the [security policy](SECURITY.md) for the browser-storage trade-off and the
 | `npm run format:check`  | Check source and test formatting            |
 | `npm run version:check` | Check SemVer and version metadata           |
 | `npm test`              | Run unit and metadata tests                 |
-| `npm run test:browser`  | Build and run browser smoke tests           |
+| `npm run test:browser`  | Build and run browser tests                 |
 | `npm run test:ocr`      | Validate fixtures and run the offline suite |
 | `npm run preview`       | Preview the static build                    |
 

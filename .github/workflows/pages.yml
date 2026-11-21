@@ -45,7 +45,7 @@ jobs:
         run: npm run build
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
-      - name: Browser smoke tests
+      - name: Browser tests
         run: npx playwright test
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'

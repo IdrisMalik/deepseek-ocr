@@ -1,6 +1,4 @@
 /** Static configuration for the browser-only (GitHub Pages) build. */
-import { acceptAttribute } from '../services/formats.js';
-
 export const clientConfig = {
   ocrUrl: 'https://api.deepseek.com/v1/tools/ocr',
   verifyUrl: 'https://api.deepseek.com/models',
@@ -16,7 +14,6 @@ export const clientConfig = {
   retryMaxRetryAfterMs: 30_000,
   retryJitterRatio: 0.25,
   requestTimeoutMs: 180_000,
-  accept: acceptAttribute(),
   keyStorageName: 'deepseek-ocr:api-key',
 } as const;
 
