@@ -29,6 +29,8 @@ after that tag that have not yet been assigned a release version.
 
 ### Changed
 
+- Extract the OCR batch workflow into a DOM-free module with a shared retry-policy source, so
+  success, retry, cancellation, and failure behavior is unit-tested without a browser.
 - Preserve completed results, invalidate rotated extractions, and offer a manual Rich layout
   retry for truncated Standard output.
 - Remove redundant accept-list generation, unused upload metadata, and dead result and

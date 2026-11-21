@@ -1,26 +1,22 @@
-/** Application shell: DOM wiring, file intake and the OCR workflow. */
-import { recognizeFileOnce, verifyApiKey } from '../services/api/client.js';
-import { isRetryableOcrError, ocrRetryAfterMs } from '../services/api/errors.js';
+/** Application shell: DOM wiring, file intake, and presentation orchestration. */
+import { verifyApiKey } from '../services/api/client.js';
 import {
   canPreview,
   createItemId,
   forgetImage,
   MAX_FILES,
-  prepareUpload,
   resolveMimeType,
   validateFile,
   validateFileContent,
 } from '../services/files.js';
 import { clearKey, saveKey } from '../services/settings.js';
-import { mapWithRetries } from '../utils/queue.js';
-import { clientConfig } from '../utils/config.js';
 import {
   describeStats,
   downloadText,
   toMarkdownExport,
   toPlainTextExport,
 } from '../utils/format.js';
-import type { FileItem, FileOcrResult, OcrPurpose } from '../services/api/types.js';
+import type { FileItem, OcrPurpose } from '../services/api/types.js';
 import { t } from '../i18n/index.js';
 import { toast } from '../components/base/Toast.js';
 import { focusAttachment, renderAttachments } from '../components/files/FileCard.js';
@@ -28,15 +24,13 @@ import { renderResult } from '../components/result/ResultPanel.js';
 import { setKeyVisibility } from '../components/settings/keyVisibility.js';
 import {
   beginExtraction,
-  cancelExtraction,
-  commitExtraction,
-  failExtraction,
   pendingItems,
   resetForInputChange,
   richLayoutRetryItems,
   state,
   successfulItems,
 } from './state.js';
+import { runOcrBatch } from './ocrBatch.js';
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -342,88 +336,48 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
   renderAll();
   if (focusCancel) dom.cancelButton.focus();
 
-  let done = 0;
   setProgress(0, targets.length, t('processingLabel'));
 
   try {
-    // The queue owns retries: a transient failure releases its slot immediately
-    // and re-enters later, so unrelated files keep moving during backoff.
-    await mapWithRetries(
-      targets,
-      async (item): Promise<FileOcrResult> => {
-        item.status = 'processing';
+    const summary = await runOcrBatch({
+      items: targets,
+      purpose,
+      apiKey,
+      signal,
+      formatError: (error) => (error instanceof Error ? error.message : t('couldNotExtract')),
+      onItemChange: (item) => {
+        if (generation !== batchGeneration) return;
+        if (item.status === 'done') {
+          // Any committed replacement makes a manually edited combined view stale.
+          state.combinedEdit = null;
+          if (state.activeId === null) state.activeId = item.id;
+        }
+        // Apply the file result immediately so completed thumbnails do not
+        // keep showing a processing spinner until the whole batch ends.
         renderAll();
-        const upload = await prepareUpload(item);
-        return recognizeFileOnce(
-          { name: upload.filename, blob: upload.blob },
-          purpose,
-          apiKey,
-          signal
-        );
       },
-      {
-        concurrency: clientConfig.concurrency,
-        maxAttempts: clientConfig.maxAttempts,
-        baseDelayMs: clientConfig.retryBaseMs,
-        maxDelayMs: clientConfig.retryMaxMs,
-        maxRetryAfterMs: clientConfig.retryMaxRetryAfterMs,
-        jitterRatio: clientConfig.retryJitterRatio,
-        isRetryable: isRetryableOcrError,
-        getRetryAfterMs: ocrRetryAfterMs,
-        signal,
-        onTerminal: (index, outcome) => {
-          if (generation !== batchGeneration) return;
-          const item = targets[index];
-          if (outcome.status === 'fulfilled') {
-            commitExtraction(item, outcome.value, purpose);
-            // Any committed replacement makes a manually edited combined view stale.
-            state.combinedEdit = null;
-            if (state.activeId === null) state.activeId = item.id;
-          } else {
-            failExtraction(
-              item,
-              outcome.reason instanceof Error ? outcome.reason.message : t('couldNotExtract')
-            );
-          }
-          done += 1;
-          setProgress(
-            done,
-            targets.length,
-            signal.aborted ? t('cancelling') : t('processingLabel')
-          );
-          // Apply the file result immediately so completed thumbnails do not
-          // keep showing a processing spinner until the whole batch ends.
-          renderAll();
-        },
-      }
-    );
+      onProgress: (done, total, aborted) => {
+        if (generation !== batchGeneration) return;
+        setProgress(done, total, aborted ? t('cancelling') : t('processingLabel'));
+      },
+    });
 
     // A clear while this batch is in flight invalidates its outcomes; never
     // write stale results into fresh state.
     if (generation !== batchGeneration) return;
 
-    // onTerminal applies every outcome that settles normally. The queue skips
-    // unsettled items when the batch is aborted, so only those still need a
-    // terminal state.
-    if (signal.aborted) {
-      for (const item of targets) {
-        if (item.status === 'ready' || item.status === 'processing') cancelExtraction(item);
-      }
-    }
-
-    const cancelled = targets.some((item) => item.status === 'cancelled');
     // Every file now has a terminal outcome, including queued items skipped on cancel.
-    done = targets.length;
-    setProgress(done, targets.length, cancelled ? t('cancelled') : t('finished'));
+    setProgress(targets.length, targets.length, summary.cancelled ? t('cancelled') : t('finished'));
     renderAll();
 
-    if (!cancelled) {
-      const failed = targets.filter((item) => item.status === 'error');
-      if (failed.length > 0 && failed.length === targets.length) {
-        showComposerError(failed[0].error ?? t('couldNotExtract'), ids);
-      } else if (failed.length > 0) {
+    if (!summary.cancelled) {
+      if (summary.failures.length > 0 && summary.failures.length === targets.length) {
+        showComposerError(summary.failures[0].error ?? t('couldNotExtract'), ids);
+      } else if (summary.failures.length > 0) {
         toast(
-          failed.length === 1 ? t('failedOne') : t('failedMany', { count: failed.length }),
+          summary.failures.length === 1
+            ? t('failedOne')
+            : t('failedMany', { count: summary.failures.length }),
           'error'
         );
       }

@@ -83,7 +83,7 @@ Commit subjects use a Conventional Commits prefix (`feat`, `fix`, `test`, `docs`
 
 ### Testing
 
-The Node test suite covers the request queue, retry policy, response parsing and invariants, file validation and upload preparation (including canvas rotation), text cleanup, export helpers, key visibility, and version metadata and configuration. Run it with `npm test`.
+The Node test suite covers the request queue, retry policy, response parsing and invariants, the headless OCR batch workflow and its cancellation, retry, and failure paths, file validation and upload preparation (including canvas rotation), text cleanup, export helpers, key visibility, and version metadata and configuration. Run it with `npm test`.
 
 Browser tests (`npm run test:browser`) drive the production build in a real Chromium: demo-mode intake, extraction, editing, rotation, result tabs, clearing, live-mode cancellation, partial-batch recovery, result preservation, the Rich-layout retry, keyboard focus restoration across DOM rebuilds, and responsive single- and dual-pane layouts. Install Chromium once with `npx playwright install chromium` before the first local run. Live-mode cases intercept the OCR endpoint with Playwright route mocking, so nothing is sent to DeepSeek and no key or charges are required. In CI they run against the same `dist/` artifact that is deployed.
 
@@ -108,6 +108,8 @@ Extraction moves each file through four stages:
 3. A bounded queue sends one `multipart/form-data` request per file to `POST https://api.deepseek.com/v1/tools/ocr` with the selected `purpose`.
 4. Responses are validated for page count, page indexes, duplicates, and ordering, parsed page by page, normalized from layout tokens and simple HTML tables into editable text, and shown for editing and export.
 
+Batch execution is isolated in `src/app/ocrBatch.ts`. It composes the queue, upload preparation, and OCR client, applies the shared item-state transitions, and reports progress and terminal outcomes without touching the DOM. The application shell retains rendering, active-result selection, error presentation, and focus management.
+
 The queue runs at most six requests at once; DeepSeek allows 15 recognitions in progress per account, so six leaves headroom for other clients using the same key. Each file gets three attempts. A transient failure releases its queue slot before waiting, using exponential backoff from 500 ms to 8 s with ±25% jitter.
 
 - **Retried automatically:** 408, 429, and 5xx responses except 504.
@@ -122,7 +124,7 @@ Network failures and timeouts are excluded from automatic retries because DeepSe
 src/
   index.html            Static entry document
   main.ts               Entry point: styles and mountApp()
-  app/                  Application shell, state, and global styles
+  app/                  Application shell, headless batch workflow, state, and styles
   components/           File, result, settings, and base UI components
   i18n/                 User-facing strings and interpolation
   services/             OCR client, file intake, formats, and key storage

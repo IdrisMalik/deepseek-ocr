@@ -1,13 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  isRetryableOcrError,
-  mapHttpError,
-  ocrRetryAfterMs,
-  OcrError,
-  parseOcrResponse,
-} from '../src/services/api/errors.js';
+import { mapHttpError, OcrError, parseOcrResponse } from '../src/services/api/errors.js';
 import { recognizeFileOnce } from '../src/services/api/client.js';
+import { createOcrQueueOptions } from '../src/app/ocrBatch.js';
 import { mapWithRetries, type QueueResult } from '../src/utils/queue.js';
 import type { FileOcrResult } from '../src/services/api/types.js';
 
@@ -15,15 +10,13 @@ const file = { name: 'a.png', blob: new Blob([new Uint8Array([1, 2, 3])], { type
 const key = 'test-key';
 const signal = () => new AbortController().signal;
 
-const retryOptions = {
+// Use the production policy; only shorten delays so the suite stays fast.
+const retryOptions = createOcrQueueOptions({
   concurrency: 1,
-  maxAttempts: 3,
   baseDelayMs: 1,
   maxDelayMs: 5,
   jitterRatio: 0,
-  isRetryable: isRetryableOcrError,
-  getRetryAfterMs: ocrRetryAfterMs,
-};
+});
 
 function recognizeWithRetries(): Promise<QueueResult<FileOcrResult>[]> {
   return mapWithRetries(
