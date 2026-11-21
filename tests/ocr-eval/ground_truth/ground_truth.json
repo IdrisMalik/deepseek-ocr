@@ -543,7 +543,7 @@
         ]
       ],
       "known_gaps": [
-        "DOCX bullets were emitted as private-use U+FOFB glyphs; the app parser normalizes them."
+        "DOCX bullets were emitted as private-use U+F0B7 glyphs; the app parser normalizes them."
       ]
     },
     "T21": {

@@ -11,8 +11,8 @@ from changelog headings because it does not affect precedence. Add entries under
 `[Unreleased]` first, then move them into the release heading. Mark incompatible changes as
 **Breaking**; they require a MAJOR increment after `1.0.0`, or a MINOR increment during `0.y.z`.
 
-The `0.1.0` entry records the tagged Public Beta baseline. `[Unreleased]` records work that has
-not yet been assigned a release version.
+The `0.1.0` entry records the tagged Public Beta baseline. `[Unreleased]` records changes merged
+after that tag that have not yet been assigned a release version.
 
 ## [Unreleased]
 
@@ -35,6 +35,11 @@ not yet been assigned a release version.
 - Pin the GitHub Actions runner image and expand CI coverage.
 - Modernize README, security, versioning, and OCR evaluation documentation; align commands and
   validation scope with the implementation.
+
+### Fixed
+
+- Correct the DOCX private-use bullet reference to `U+F0B7`, clarify that DOC and PPT lack
+  fixtures, and refresh evaluation checksums.
 
 ## [0.1.0] - 2026-11-18
 

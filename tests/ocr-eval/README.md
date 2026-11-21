@@ -52,8 +52,9 @@ npm run test:ocr:validate
 npm run test:ocr:eval
 ```
 
-The offline suite runs on demand; CI covers the unit, build, and browser checks. Run the OCR
-suite before a release that changes parsing, fixtures, or reference data.
+The offline suite runs on demand; CI covers static checks, unit tests, the production build, and
+browser smoke tests. Run the OCR suite before a release that changes parsing, fixtures, or
+reference data.
 
 Requirements:
 
