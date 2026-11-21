@@ -40,6 +40,8 @@ after that tag that have not yet been assigned a release version.
 
 ### Fixed
 
+- Align the Ctrl/Cmd+Enter shortcut with pending-file extraction so completed results and edits
+  are preserved, and ignore it while a settings panel or editable field has focus.
 - Correct the DOCX private-use bullet reference to `U+F0B7`, clarify that DOC and PPT lack
   fixtures, and refresh evaluation checksums.
 

@@ -93,6 +93,26 @@ function selectedPurpose(): OcrPurpose {
     : 'text_recognition';
 }
 
+/** Input types that do not accept typed or numeric entry. */
+const NON_TEXT_INPUT_TYPES = new Set([
+  'button',
+  'checkbox',
+  'color',
+  'file',
+  'radio',
+  'range',
+  'reset',
+  'submit',
+]);
+
+/** True when a focused control owns keyboard input for editing or selection. */
+function isEditingControl(target: Element | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  if (target instanceof HTMLInputElement) return !NON_TEXT_INPUT_TYPES.has(target.type);
+  return target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
+}
+
 /* --------------------------- Rendering --------------------------- */
 
 function renderProgress(): void {
@@ -431,6 +451,14 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
   }
 }
 
+/** Extract pending files, or every file once the batch is already complete. */
+function startExtraction(): void {
+  const pending = pendingItems();
+  const targets = pending.length > 0 ? pending : state.items;
+  if (targets.length === 0) return;
+  void runOcr(targets.map((item) => item.id));
+}
+
 function cancelProcessing(): void {
   batchController?.abort();
   dom.progressLabel.textContent = t('cancelling');
@@ -472,13 +500,7 @@ window.addEventListener('paste', (event) => {
   enqueueFiles(files);
 });
 
-dom.extractButton.addEventListener('click', () => {
-  // Preserve completed results when adding files; explicit re-extraction uses
-  // all items once every file is already done.
-  const pending = pendingItems();
-  const ids = (pending.length > 0 ? pending : state.items).map((item) => item.id);
-  void runOcr(ids);
-});
+dom.extractButton.addEventListener('click', startExtraction);
 dom.cancelButton.addEventListener('click', cancelProcessing);
 dom.clearButton.addEventListener('click', clearAll);
 dom.layoutRetryButton.addEventListener('click', () => {
@@ -706,12 +728,13 @@ dom.exportMdButton.addEventListener('click', () => {
 });
 
 window.addEventListener('keydown', (event) => {
-  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-    event.preventDefault();
-    if (!dom.extractButton.disabled) {
-      void runOcr(state.items.map((item) => item.id));
-    }
-  }
+  if (!(event.ctrlKey || event.metaKey) || event.key !== 'Enter') return;
+  if (event.isComposing) return;
+  if (!dom.keyPanel.hidden || !dom.privacyNote.hidden) return;
+  if (isEditingControl(document.activeElement)) return;
+  if (dom.extractButton.disabled) return;
+  event.preventDefault();
+  startExtraction();
 });
 
 /** Mount the application into the existing static markup. */

@@ -34,6 +34,7 @@ The output is written to `dist/`. Relative asset paths keep the build loadable f
 1. Add files with **browse**, drag and drop, or paste from the clipboard. The workspace accepts up to 20 files, up to 100 MiB each.
 2. Choose **Standard text** for plain text, or **Rich layout** for layout-aware page OCR that can preserve headings and tables. Standard is the safer default for long, dense documents.
 3. Select **Extract text**. New or pending files are processed while completed results are kept; when every file is done, the action becomes **Re-extract all**. Up to six requests run concurrently, and completed files appear as they settle.
+   Press `Ctrl+Enter` (`Cmd+Enter` on macOS) to run the same action from the keyboard; the shortcut is ignored while a settings panel or editable field has focus.
 4. Edit the recognized text, copy it, or download it as `.txt` or `.md`. **Revert** restores the last extracted text. Rotating a completed image clears its result so it can be extracted again in the new orientation. Identifiers printed in the source document remain part of the text and are included in exports.
 
 Cancelling or clearing the workspace aborts in-flight requests and discards pending retries. Removing the API key during a batch also cancels it.

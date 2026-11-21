@@ -1,8 +1,8 @@
 /**
  * Browser regression tests for release-critical interactions that the smoke
  * suite does not cover: focus restoration across DOM rebuilds, responsive
- * layout variants, result preservation, Rich-layout recovery, and partial
- * batch failures.
+ * layout variants, result preservation, Rich-layout recovery, partial batch
+ * failures, and keyboard extraction.
  *
  * Demo mode makes no network calls. Live-mode cases seed a fake key and
  * intercept the OCR endpoint, so no request can reach DeepSeek.
@@ -28,6 +28,27 @@ async function openDemo(page: Page): Promise<void> {
 async function addFiles(page: Page, files: string[], expectedCount = files.length): Promise<void> {
   await page.setInputFiles('#fileInput', files);
   await expect(page.getByTestId('attachment')).toHaveCount(expectedCount);
+}
+
+async function mockOcr(page: Page, requests: string[]): Promise<void> {
+  await page.route('**/v1/tools/ocr', async (route) => {
+    const body = route.request().postDataBuffer()?.toString('latin1') ?? '';
+    const name = body.includes('sample.jpg') ? 'sample.jpg' : 'sample.png';
+    requests.push(name);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        pages: [
+          {
+            index: 0,
+            text: name === 'sample.jpg' ? 'JPG text.' : 'PNG text.',
+            finish_reason: 'stop',
+          },
+        ],
+      }),
+    });
+  });
 }
 
 function boxesFor(page: Page): Promise<{ composer: Box | null; result: Box | null }> {
@@ -138,6 +159,92 @@ test.describe('workflow state', () => {
     await jpgTab.click();
     await expect(jpgTab).toBeFocused();
     await expect(page.getByTestId('text-editor')).toHaveValue(/sample\.jpg/);
+  });
+
+  test('Ctrl/Cmd+Enter extracts only pending files and preserves completed edits', async ({
+    page,
+  }) => {
+    await seedFakeKey(page);
+    const requests: string[] = [];
+    await mockOcr(page, requests);
+    await page.goto('/');
+
+    await addFiles(page, ['tests/fixtures/sample.png']);
+    await page.getByTestId('extract-button').click();
+    await expect(page.getByTestId('text-editor')).toHaveValue('PNG text.');
+    await expect(page.getByTestId('extract-button')).toContainText('Re-extract all');
+
+    await page.getByTestId('text-editor').fill('Edited PNG');
+    await expect(page.getByTestId('revert-button')).toBeVisible();
+
+    await addFiles(page, ['tests/fixtures/sample.jpg'], 2);
+    await expect(page.getByTestId('extract-button')).toContainText('Extract text');
+    expect(requests).toEqual(['sample.png']);
+
+    await page.getByTestId('text-editor').blur();
+    await page.keyboard.press('Control+Enter');
+    await expect(page.locator('.result-tab')).toHaveCount(3);
+
+    expect(requests).toEqual(['sample.png', 'sample.jpg']);
+    await expect(page.getByTestId('text-editor')).toHaveValue('Edited PNG');
+    await page
+      .getByTestId('result-tabs')
+      .getByRole('button', { name: 'sample.jpg', exact: true })
+      .click();
+    await expect(page.getByTestId('text-editor')).toHaveValue('JPG text.');
+  });
+
+  test('Ctrl/Cmd+Enter is ignored in settings and the result editor', async ({ page }) => {
+    await seedFakeKey(page);
+    const requests: string[] = [];
+    await mockOcr(page, requests);
+    await page.goto('/');
+
+    await addFiles(page, ['tests/fixtures/sample.png']);
+    await page.getByTestId('extract-button').click();
+    await expect(page.getByTestId('text-editor')).toHaveValue('PNG text.');
+    expect(requests).toEqual(['sample.png']);
+
+    await page.locator('#keyButton').click();
+    await expect(page.getByTestId('key-panel')).toBeVisible();
+    await page.locator('#keyClose').focus();
+    const settingsRequest = page
+      .waitForRequest('**/v1/tools/ocr', { timeout: 500 })
+      .catch(() => null);
+    await page.keyboard.press('Control+Enter');
+    expect(await settingsRequest).toBeNull();
+    await expect(page.getByTestId('key-panel')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('key-panel')).toBeHidden();
+
+    await page.getByTestId('text-editor').fill('Edited PNG');
+    const editorRequest = page
+      .waitForRequest('**/v1/tools/ocr', { timeout: 500 })
+      .catch(() => null);
+    await page.keyboard.press('Control+Enter');
+    expect(await editorRequest).toBeNull();
+    await expect(page.getByTestId('text-editor')).toHaveValue('Edited PNG');
+    expect(requests).toEqual(['sample.png']);
+  });
+
+  test('Ctrl/Cmd+Enter re-extracts all files once every result is complete', async ({ page }) => {
+    await seedFakeKey(page);
+    const requests: string[] = [];
+    await mockOcr(page, requests);
+    await page.goto('/');
+
+    await addFiles(page, ['tests/fixtures/sample.png', 'tests/fixtures/sample.jpg']);
+    await page.getByTestId('extract-button').click();
+    await expect(page.locator('.result-tab')).toHaveCount(3);
+    await expect(page.getByTestId('extract-button')).toContainText('Re-extract all');
+    expect(requests).toHaveLength(2);
+
+    await page.locator('h1').click();
+    await page.keyboard.press('Control+Enter');
+    await expect.poll(() => requests.length).toBe(4);
+    expect(requests.slice(2).sort()).toEqual(['sample.jpg', 'sample.png']);
+    await expect(page.locator('.result-tab')).toHaveCount(3);
   });
 
   test('truncated Standard output can be retried with Rich layout', async ({ page }) => {
