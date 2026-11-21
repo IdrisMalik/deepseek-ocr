@@ -39,6 +39,8 @@ The output is written to `dist/`. Relative asset paths keep the build loadable f
 
 Cancelling or clearing the workspace aborts in-flight requests and discards pending retries. Removing the API key during a batch also cancels it.
 
+Starting a retry, re-extraction, or Rich layout retry preserves each file's last successful result and edits until that file's replacement succeeds. A failed or cancelled attempt leaves them in place; the active result is read-only while its replacement is in flight.
+
 ## Features
 
 - 11 input formats: PNG, JPEG, WebP, GIF, BMP, TIFF, PDF, DOC, DOCX, PPT, and PPTX. Intake checks the declared type, size, and leading bytes before upload; document parsing is delegated to DeepSeek.

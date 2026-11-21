@@ -274,11 +274,151 @@ test.describe('workflow state', () => {
     await page.getByTestId('extract-button').click();
     await expect(page.getByTestId('truncated-notice')).toBeVisible();
     await expect(page.getByTestId('layout-retry')).toBeVisible();
+    await expect(page.getByTestId('text-editor')).toHaveValue('Standard output reached the limit.');
+    await page.getByTestId('text-editor').fill('Edited standard output');
+    await expect(page.getByTestId('revert-button')).toBeVisible();
 
     await page.getByTestId('layout-retry').click();
     await expect(page.getByTestId('text-editor')).toHaveValue('Rich layout recovered text.');
+    await expect(page.getByTestId('revert-button')).toBeHidden();
     await expect(page.getByTestId('truncated-notice')).toBeHidden();
     expect(purposes).toEqual(['text_recognition', 'rich_layout_recognition']);
+  });
+
+  test('a failed Rich retry keeps the previous Standard result and edit', async ({ page }) => {
+    await seedFakeKey(page);
+    const purposes: string[] = [];
+    await page.route('**/v1/tools/ocr', async (route) => {
+      const body = route.request().postDataBuffer()?.toString('latin1') ?? '';
+      const rich = body.includes('rich_layout_recognition');
+      purposes.push(rich ? 'rich_layout_recognition' : 'text_recognition');
+      if (rich) {
+        await route.fulfill({
+          status: 403,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: { message: 'Rich layout is unavailable.' } }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          pages: [
+            {
+              index: 0,
+              text: 'Standard output kept after retry.',
+              finish_reason: 'length',
+            },
+          ],
+        }),
+      });
+    });
+    await page.goto('/');
+
+    await addFiles(page, ['tests/fixtures/sample.png']);
+    await page.getByTestId('extract-button').click();
+    await expect(page.getByTestId('truncated-notice')).toBeVisible();
+    const editor = page.getByTestId('text-editor');
+    await expect(editor).toHaveValue('Standard output kept after retry.');
+    await editor.fill('Edited standard output');
+    await expect(page.getByTestId('revert-button')).toBeVisible();
+
+    await page.getByTestId('layout-retry').click();
+    await expect(page.locator('[data-testid="attachment"].error')).toBeVisible();
+    await expect(editor).toHaveValue('Edited standard output');
+    await expect(editor).toHaveJSProperty('readOnly', false);
+    await expect(page.getByTestId('truncated-notice')).toBeVisible();
+    await expect(page.getByTestId('layout-retry')).toBeVisible();
+    await expect(page.getByTestId('layout-retry')).toBeEnabled();
+    await expect(page.getByTestId('revert-button')).toBeVisible();
+    await expect(page.getByTestId('extract-button')).toContainText('Extract text');
+    expect(purposes).toEqual(['text_recognition', 'rich_layout_recognition']);
+  });
+
+  test('a partial re-extract keeps the failed file’s previous result', async ({ page }) => {
+    await seedFakeKey(page);
+    let batch = 0;
+    await page.route('**/v1/tools/ocr', async (route) => {
+      const body = route.request().postDataBuffer()?.toString('latin1') ?? '';
+      const jpg = body.includes('sample.jpg');
+      if (batch === 1 && jpg) {
+        await route.fulfill({
+          status: 403,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: { message: 'JPG re-extraction rejected.' } }),
+        });
+        return;
+      }
+      const text = jpg
+        ? batch === 0
+          ? 'JPG original result.'
+          : 'JPG updated result.'
+        : batch === 0
+          ? 'PNG original result.'
+          : 'PNG updated result.';
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          pages: [{ index: 0, text, finish_reason: 'stop' }],
+        }),
+      });
+    });
+    await page.goto('/');
+
+    await addFiles(page, ['tests/fixtures/sample.png', 'tests/fixtures/sample.jpg']);
+    await page.getByTestId('extract-button').click();
+    await expect(page.locator('.result-tab')).toHaveCount(3);
+    const tabs = page.getByTestId('result-tabs');
+    await tabs.getByRole('button', { name: 'sample.png', exact: true }).click();
+    await expect(page.getByTestId('text-editor')).toHaveValue('PNG original result.');
+    await tabs.getByRole('button', { name: 'sample.jpg', exact: true }).click();
+    await expect(page.getByTestId('text-editor')).toHaveValue('JPG original result.');
+
+    batch = 1;
+    await page.getByTestId('extract-button').click();
+    await expect(
+      page.locator('[data-testid="attachment"][data-name="sample.jpg"].error')
+    ).toBeVisible();
+    await expect(page.locator('.toast.error')).toContainText('Could not extract text from 1 file.');
+    await expect(page.locator('.result-tab')).toHaveCount(3);
+    await tabs.getByRole('button', { name: 'sample.png', exact: true }).click();
+    await expect(page.getByTestId('text-editor')).toHaveValue('PNG updated result.');
+    await tabs.getByRole('button', { name: 'sample.jpg', exact: true }).click();
+    await expect(page.getByTestId('text-editor')).toHaveValue('JPG original result.');
+  });
+
+  test('cancelling a re-extract keeps the previous result', async ({ page }) => {
+    await seedFakeKey(page);
+    let calls = 0;
+    await page.route('**/v1/tools/ocr', async (route) => {
+      calls += 1;
+      if (calls === 1) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            pages: [{ index: 0, text: 'Original result.', finish_reason: 'stop' }],
+          }),
+        });
+      }
+      // Leave the replacement request pending until the batch is cancelled.
+    });
+    await page.goto('/');
+
+    await addFiles(page, ['tests/fixtures/sample.png']);
+    await page.getByTestId('extract-button').click();
+    await expect(page.getByTestId('text-editor')).toHaveValue('Original result.');
+
+    await page.getByTestId('extract-button').click();
+    await expect(page.getByTestId('progress-wrap')).toBeVisible();
+    await page.getByTestId('cancel-button').click();
+
+    await expect(page.getByTestId('text-editor')).toHaveValue('Original result.');
+    await expect(page.getByTestId('result-panel')).toBeVisible();
+    await expect(page.locator('[data-testid="attachment"]')).toContainText('Cancelled');
+    await expect(page.getByTestId('extract-button')).toBeEnabled();
   });
 
   test('Rich retry is hidden when no Standard result is truncated', async ({ page }) => {

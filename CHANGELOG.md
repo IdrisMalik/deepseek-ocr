@@ -42,6 +42,8 @@ after that tag that have not yet been assigned a release version.
 
 ### Fixed
 
+- Preserve the last successful result and manual edits when a retry or re-extraction fails or is
+  cancelled; replace them only after a new extraction succeeds.
 - Show the Rich layout retry only when an active Standard result is truncated, avoiding a no-op
   action in mixed-mode batches.
 - Align the Ctrl/Cmd+Enter shortcut with pending-file extraction so completed results and edits

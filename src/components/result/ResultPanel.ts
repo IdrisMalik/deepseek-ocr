@@ -25,6 +25,7 @@ export function renderResult(): void {
     panel.hidden = true;
     main.classList.remove('has-result');
     editor.value = '';
+    editor.readOnly = false;
     editor.dataset.exportTitle = t('ocrOutput');
     stats.textContent = t('emptyStats');
     truncatedNotice.hidden = true;
@@ -72,6 +73,14 @@ export function renderResult(): void {
   }
 
   const active = state.items.find((i) => i.id === state.activeId) ?? null;
+  // A successful replacement clears the prior edit, so do not accept edits that
+  // would be silently overwritten while the active result is in flight.
+  const activeBusy =
+    state.activeId === 'all'
+      ? state.processing
+      : active !== null &&
+        active.result !== null &&
+        (active.status === 'ready' || active.status === 'processing');
   const truncated =
     state.activeId === 'all'
       ? hasTruncatedPages(done.map((item) => item.result))
@@ -85,6 +94,7 @@ export function renderResult(): void {
 
   const text = currentText();
   if (editor.value !== text) editor.value = text;
+  editor.readOnly = activeBusy;
   stats.textContent = describeStats(text);
   truncatedNotice.hidden = !truncated;
   layoutRetry.hidden = richLayoutRetryItems().length === 0;

@@ -26,7 +26,17 @@ import { toast } from '../components/base/Toast.js';
 import { focusAttachment, renderAttachments } from '../components/files/FileCard.js';
 import { renderResult } from '../components/result/ResultPanel.js';
 import { setKeyVisibility } from '../components/settings/keyVisibility.js';
-import { pendingItems, richLayoutRetryItems, state, successfulItems } from './state.js';
+import {
+  beginExtraction,
+  cancelExtraction,
+  commitExtraction,
+  failExtraction,
+  pendingItems,
+  resetForInputChange,
+  richLayoutRetryItems,
+  state,
+  successfulItems,
+} from './state.js';
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -161,15 +171,6 @@ function disposeItem(item: FileItem): void {
   forgetImage(item.id);
 }
 
-/** Return a file to its pre-extraction state. */
-function resetExtraction(item: FileItem): void {
-  item.status = 'ready';
-  item.purpose = null;
-  item.error = null;
-  item.result = null;
-  item.editedText = null;
-}
-
 async function addFiles(files: File[], generation: number): Promise<void> {
   let problem: string | null = null;
 
@@ -274,7 +275,7 @@ function rotateItem(id: string): void {
   item.rotation = (item.rotation + 90) % 360;
   const invalidates = item.result !== null || item.editedText !== null || item.status !== 'ready';
   if (invalidates) {
-    resetExtraction(item);
+    resetForInputChange(item);
     forgetImage(item.id);
     state.combinedEdit = null;
     if (state.activeId === item.id) {
@@ -336,11 +337,8 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
   const apiKey = state.apiKey;
 
   dom.composerError.hidden = true;
-  state.combinedEdit = null;
-  for (const item of targets) resetExtraction(item);
-  if (state.activeId !== 'all' && targets.some((item) => item.id === state.activeId)) {
-    state.activeId = null;
-  }
+  // Keep the committed result and any edit until a replacement succeeds.
+  for (const item of targets) beginExtraction(item);
   renderAll();
   if (focusCancel) dom.cancelButton.focus();
 
@@ -377,14 +375,15 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
           if (generation !== batchGeneration) return;
           const item = targets[index];
           if (outcome.status === 'fulfilled') {
-            item.result = outcome.value;
-            item.purpose = purpose;
-            item.status = 'done';
+            commitExtraction(item, outcome.value, purpose);
+            // Any committed replacement makes a manually edited combined view stale.
+            state.combinedEdit = null;
             if (state.activeId === null) state.activeId = item.id;
           } else {
-            item.status = 'error';
-            item.error =
-              outcome.reason instanceof Error ? outcome.reason.message : t('couldNotExtract');
+            failExtraction(
+              item,
+              outcome.reason instanceof Error ? outcome.reason.message : t('couldNotExtract')
+            );
           }
           done += 1;
           setProgress(
@@ -408,7 +407,7 @@ async function runOcr(ids: string[], focusCancel = false): Promise<void> {
     // terminal state.
     if (signal.aborted) {
       for (const item of targets) {
-        if (item.status === 'ready' || item.status === 'processing') item.status = 'cancelled';
+        if (item.status === 'ready' || item.status === 'processing') cancelExtraction(item);
       }
     }
 
