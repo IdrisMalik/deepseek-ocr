@@ -1,7 +1,7 @@
 {
   "name": "deepseek-ocr-studio",
   "version": "0.1.0",
-  "description": "A static, browser-only OCR workstation for the official DeepSeek OCR API (Public Beta).",
+  "description": "A static, browser-only OCR application for the official DeepSeek OCR API (Public Beta).",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -12,6 +12,7 @@
     "lint": "oxlint src tests",
     "format": "oxfmt --write src tests",
     "format:check": "oxfmt --check src tests",
+    "version:check": "tsx --test tests/metadata.test.ts",
     "test": "tsx --test tests/*.test.ts",
     "test:browser": "npm run build && playwright test",
     "test:ocr": "npm run test:ocr:validate && npm run test:ocr:eval",
